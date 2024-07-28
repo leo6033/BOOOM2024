@@ -2,17 +2,46 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameConst : MonoBehaviour
+namespace Gameplay
 {
-    // Start is called before the first frame update
-    void Start()
+    public static class GameConst
     {
-        
+        /// <summary>
+        /// 场地高度
+        /// </summary>
+        public const int BackgroundHeight = 30;
+        /// <summary>
+        /// 场地宽度
+        /// </summary>
+        public const int BackgroundWidth = 40;
+        /// <summary>
+        /// 方块场地高度
+        /// </summary>
+        public const int TetrisGroundHeight = 10;
+        /// <summary>
+        /// 方块场地宽度
+        /// </summary>
+        public const int TetrisGroundWidth = 20;
+
+        public const float UpdateSeconds = 1;
+
+        public const int BlockSize = 20;
+
+        public const float KeyCodeUpdateTime = 0.3f;
     }
 
-    // Update is called once per frame
-    void Update()
+    public enum TetrisState
     {
-        
+        Rotate0 = 0,
+        Rotate90 = 1,
+        Rotate180 = 2,
+        Rotate270 = 3
+    }
+
+    public static class BlockState
+    {
+        public const int Null = 0;
+        public const int SoftBlock = 1;
+        public const int Block = 2;
     }
 }
