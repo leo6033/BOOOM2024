@@ -1,0 +1,10 @@
+ID,CubePrefab,Speed,Weight,##Notes
+ID,预制名,速度,权重,备注
+int,string,int,int,
+1,Cube_T,1,2,T型
+2,Cube_L,1,1,L型
+3,Cube_LConvert,1,2,L型翻转
+4,Cube_I,1,2,I型
+5,Cube_O,1,2,田字形
+6,Cube_Z,1,2,Z型
+7,Cube_ZConvert,1,2,Z型翻转

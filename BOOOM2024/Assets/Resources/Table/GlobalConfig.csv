@@ -1,0 +1,4 @@
+ID,Const_string,Type,Para1,Para2,##Notes
+ID,常量名,枚举类型,参数1,参数2,备注
+int,string,int,int,int,
+1,Reset_Limit,1,5,,方块移动被重置的次数上限
