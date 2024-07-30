@@ -70,7 +70,16 @@ namespace Gameplay.UI
             {
                 dir = Vector2Int.up;
             }
-            
+            else if (Input.GetKeyDown(KeyCode.Z))
+            {
+                if(tetris.RotateTetrisArea(1))
+                    UpdateAllBlocks();
+            }
+            else if(Input.GetKeyDown(KeyCode.X))
+            {
+                if(tetris.RotateTetrisArea(-1))
+                    UpdateAllBlocks();
+            }
             
             
             if (dir != Vector2Int.zero && tetris.MoveTetrisArea(dir.x, dir.y))
