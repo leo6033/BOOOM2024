@@ -44,4 +44,15 @@ namespace Gameplay
         public const int SoftBlock = 1;
         public const int Block = 2;
     }
+
+    public enum MoveBlockType
+    {
+        T = 1,
+        L = 2,
+        LR = 3,
+        I = 4,
+        S = 5,
+        Z = 6,
+        ZR = 7
+    }
 }
