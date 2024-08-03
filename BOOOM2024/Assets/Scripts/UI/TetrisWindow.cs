@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,8 @@ namespace Gameplay.UI
         private bool _dirKeyDown = false;
         private float _lastDirKeyDownTime = 0f;
         private Vector2Int _lastDir;
+
+        private float _nextTickTime = 0;
 
         public void Awake()
         {
@@ -46,9 +49,24 @@ namespace Gameplay.UI
             UpdateAllBlocks();
         }
 
+        private void Start()
+        {
+            StartCoroutine(UpdateCo());
+        }
+
         public IEnumerator UpdateCo()
         {
-            yield return null;
+            while (true)
+            {
+                if(Time.time > _nextTickTime)
+                {
+                    tetris.Tick();
+                    UpdateAllBlocks();
+                    _nextTickTime += 1;
+                }
+
+                yield return null;
+            }
         }
         
         public void Update()
@@ -132,6 +150,20 @@ namespace Gameplay.UI
                     else
                     {
                         _tetrisBlocks[i, j].color = Color.red;
+                    }
+                }
+            }
+
+            if (tetris.CurrentMoveBlock != null)
+            {
+                for (int i = 0; i < tetris.CurrentMoveBlock.Width; i++)
+                {
+                    for (int j = 0; j < tetris.CurrentMoveBlock.Height; j++)
+                    {
+                        var posX = tetris.CurrentMoveBlock.pos.x + i - tetris.CurrentMoveBlock.Width / 2;
+                        var posY = tetris.CurrentMoveBlock.pos.y + j;
+                        
+                        _tetrisBlocks[posX, posY].color = Color.black;
                     }
                 }
             }

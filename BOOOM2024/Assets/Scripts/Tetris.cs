@@ -28,6 +28,21 @@ namespace Gameplay
 
         private Vector2Int _tetrisCenter;
 
+        private BTetrisMoveBlock _currentMoveBlock;
+
+        public BTetrisMoveBlock CurrentMoveBlock => _currentMoveBlock;
+        
+        public Dictionary<MoveBlockType, BTetrisMoveBlock> blockDict = new Dictionary<MoveBlockType, BTetrisMoveBlock>()
+        {
+            { MoveBlockType.T , new TTetrisMoveBlock()},
+            { MoveBlockType.L , new LTetrisMoveBlock()},
+            { MoveBlockType.LR , new LRTetrisMoveBlock()},
+            { MoveBlockType.S , new STetrisMoveBlock()},
+            { MoveBlockType.I , new ITetrisMoveBlock()},
+            { MoveBlockType.Z , new ZTetrisMoveBlock()},
+            { MoveBlockType.ZR , new ZRTetrisMoveBlock()}
+        };
+
         public Dictionary<TetrisState, Func<int, int, Vector2Int>> tetrisToAreaPosFuncs = new Dictionary<TetrisState, Func<int, int, Vector2Int>>()
         {
             { TetrisState.Rotate0 , (x, y) => new Vector2Int(x - GameConst.TetrisGroundWidth / 2, y - GameConst.TetrisGroundHeight / 2)},
@@ -35,6 +50,31 @@ namespace Gameplay
             { TetrisState.Rotate180 , (x, y) => new Vector2Int(GameConst.TetrisGroundWidth / 2 - x - 1, GameConst.TetrisGroundHeight / 2 - y - 1)},
             { TetrisState.Rotate270 , (x, y) => new Vector2Int(y - GameConst.TetrisGroundHeight / 2, GameConst.TetrisGroundWidth / 2 - x - 1)}
         };
+
+        public Dictionary<TetrisState, Func<int, int, Vector2Int, Vector2Int>> areaPosToTetrisPosFuncs =
+            new Dictionary<TetrisState, Func<int, int, Vector2Int, Vector2Int>>()
+            {
+                {
+                    TetrisState.Rotate0,
+                    (x, y, center) => new Vector2Int(x - center.x + GameConst.TetrisGroundWidth / 2,
+                        y - center.y + GameConst.TetrisGroundHeight / 2)
+                },
+                {
+                    TetrisState.Rotate90,
+                    (x, y, center) => new Vector2Int(y - center.y + GameConst.TetrisGroundWidth / 2,
+                        GameConst.TetrisGroundHeight / 2 - 1 - x + center.x)
+                },
+                {
+                    TetrisState.Rotate180,
+                    (x, y, center) => new Vector2Int(GameConst.TetrisGroundWidth / 2 - x - 1 + center.x,
+                        GameConst.TetrisGroundHeight / 2 - 1 - y + center.y)
+                },
+                {
+                    TetrisState.Rotate270,
+                    (x, y, center) => new Vector2Int(GameConst.TetrisGroundWidth / 2 - 1 - y + center.y,
+                        x + GameConst.TetrisGroundHeight / 2 - center.x)
+                }
+            };
 
         public Tetris()
         {
@@ -46,6 +86,9 @@ namespace Gameplay
             UpdateAllBlockValue();
         }
 
+        /// <summary>
+        /// 更新场地数据
+        /// </summary>
         public void UpdateAllBlockValue()
         {
             Debug.Log($"current rotate {_rotateState}");
@@ -65,10 +108,96 @@ namespace Gameplay
                 for (int j = 0; j < GameConst.TetrisGroundHeight; j++)
                 {
                     var pos = action(i, j) + _tetrisCenter;
-                    Debug.Log(pos);
                     _area[pos.x, pos.y] = _tetrisArea[i, j];
                 }
             }
+        }
+
+        /// <summary>
+        /// 更新
+        /// </summary>
+        public void Tick()
+        {
+            TickMoveBlock();
+            UpdateAllBlockValue();
+        }
+
+        public void TickMoveBlock()
+        {
+            if (_currentMoveBlock == null)
+            {
+                CreateNewMoveBlock();
+                return;
+            }
+            
+            var targetPos = _currentMoveBlock.pos + Vector2Int.down;
+
+            var board = GetTetrisAreaBoard();
+            
+            for (int i = 0; i < _currentMoveBlock.Width; i++)
+            {
+                for (int j = 0; j < _currentMoveBlock.Height; j++)
+                {
+                    var posX = targetPos.x + i - _currentMoveBlock.Width / 2;
+                    var posY = targetPos.y + j;
+
+                    if (_area[posX, posY] == BlockState.SoftBlock || posY < board.y1)
+                    {
+                        MoveBlockFinish(BlockState.SoftBlock);
+                        return;
+                    }
+                    else if (_area[posX, posY] == BlockState.Block || posY < 0)
+                    {
+                        MoveBlockFinish(BlockState.Block);
+                        return;
+                    }
+                    else if (posY == board.y2)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            _currentMoveBlock.pos = targetPos;
+        }
+
+        private void MoveBlockFinish(int value)
+        {
+            // 落在移动场地内
+            if (value == BlockState.SoftBlock)
+            {
+                var func = areaPosToTetrisPosFuncs[_rotateState];
+                for (int i = 0; i < _currentMoveBlock.Width; i++)
+                {
+                    for (int j = 0; j < _currentMoveBlock.Height; j++)
+                    {
+                        var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
+                        var posY = _currentMoveBlock.pos.y + j;
+
+                        var pos = func(posX, posY, _tetrisCenter);
+                        
+                        Debug.Log($"[MoveBlockFinish] {pos}");
+                        _tetrisArea[pos.x, pos.y] = value;
+                    }
+                }
+                
+            }
+            // 落在总场地
+            else
+            {
+                for (int i = 0; i < _currentMoveBlock.Width; i++)
+                {
+                    for (int j = 0; j < _currentMoveBlock.Height; j++)
+                    {
+                        var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2 - _tetrisCenter.x + GameConst.TetrisGroundWidth / 2;
+                        var posY = _currentMoveBlock.pos.y + j - _tetrisCenter.y + GameConst.TetrisGroundHeight / 2;
+
+                        _area[posX, posY] = value;
+                    }
+                }
+            }
+
+            _currentMoveBlock = null;
         }
 
         public TetrisBoard GetTetrisAreaBoard()
@@ -98,6 +227,80 @@ namespace Gameplay
                     y2 = _tetrisCenter.y + GameConst.TetrisGroundWidth / 2
                 };
             }
+        }
+
+        public void CreateNewMoveBlock()
+        {
+            _currentMoveBlock = new ITetrisMoveBlock();
+
+            if (_rotateState == TetrisState.Rotate0)
+            {
+                _currentMoveBlock.pos = _tetrisCenter + new Vector2Int(0, GameConst.TetrisGroundHeight / 2 - 1);
+            }
+            else if (_rotateState == TetrisState.Rotate90)
+            {
+                _currentMoveBlock.pos = _tetrisCenter + new Vector2Int(-GameConst.TetrisGroundHeight / 2, 0);
+            }
+            else if (_rotateState == TetrisState.Rotate180)
+            {
+                _currentMoveBlock.pos = _tetrisCenter + new Vector2Int(0, -GameConst.TetrisGroundHeight / 2);
+            }
+            else
+            {
+                _currentMoveBlock.pos = _tetrisCenter + new Vector2Int(GameConst.TetrisGroundHeight / 2 - 1, 0);
+            }
+
+            AdjustMoveBlockPosition();
+        }
+
+        public void AdjustMoveBlockPosition()
+        {
+            
+
+            var moveDis = 0;
+            if (_rotateState == TetrisState.Rotate0 || _rotateState == TetrisState.Rotate180)
+            {
+                for (int i = 0; i < _currentMoveBlock.Width ; i++)
+                {
+                    var tmp = 0;
+                    for (int j = 0; j < _currentMoveBlock.Height; j++)
+                    {
+                        var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
+                        var posY = _currentMoveBlock.pos.y + j;
+
+                        if (_area[posX, posY] != BlockState.Null)
+                        {
+                            tmp++;
+                        }
+                    }
+
+                    moveDis = math.max(moveDis, tmp);
+                }
+                
+            }
+            else
+            {
+                for (int i = 0; i < _currentMoveBlock.Height; i++)
+                {
+                    var tmp = 0;
+                    for (int j = 0; j < _currentMoveBlock.Width; j++)
+                    {
+                        var posX = _currentMoveBlock.pos.x + j - _currentMoveBlock.Width / 2;
+                        var posY = _currentMoveBlock.pos.y + i;
+                        
+                        if (_area[posX, posY] != BlockState.Null)
+                        {
+                            tmp++;
+                        }
+                    }
+                    moveDis = math.max(moveDis, tmp);
+                }
+            }
+        }
+
+        public void DoAdjustMoveBlock(int move)
+        {
+            
         }
 
         /// <summary>
