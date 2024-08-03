@@ -1,0 +1,5 @@
+SoundsID,Sounds_string,Type,ResourceID,PlayCD
+音频调用ID,音频常量名,类型,音频资源调用ID,播放间隔
+int,string,int,intlist,int
+1,SFX_Elimate,2,1|2|3,
+2,SFX_turnToSolid,2,4,
