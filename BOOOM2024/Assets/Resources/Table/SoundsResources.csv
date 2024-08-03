@@ -1,0 +1,7 @@
+ResourceId,SoundsResource
+资源ID,资源路径
+int,string
+1,Sounds\SFX_Elimate1
+2,Sounds\SFX_Elimate2
+3,Sounds\SFX_Elimate3
+4,Sounds\SFX_Tetris_TurnToSolid
