@@ -10,6 +10,7 @@ namespace Gameplay.UI
     {
         public Tetris tetris;
         public GameObject blockPrefab;
+        public GameConstConfig config;
         
         private Image[,] _tetrisBlocks;
         public RectTransform areaRectTransform;
@@ -22,6 +23,7 @@ namespace Gameplay.UI
 
         public void Awake()
         {
+            GameConst.Config = config;
             Initialization();
         }
 
@@ -76,7 +78,7 @@ namespace Gameplay.UI
                 return;
             
             var dir = Vector2Int.zero;
-            if (Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 dir = Vector2Int.left;
             }
@@ -92,7 +94,7 @@ namespace Gameplay.UI
             {
                 dir = Vector2Int.up;
             }
-            else if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.LeftArrow))
+            else if (Input.GetKeyDown(KeyCode.Z))
             {
                 if(tetris.RotateTetrisArea(1))
                     UpdateAllBlocks();

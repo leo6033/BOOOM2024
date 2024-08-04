@@ -191,17 +191,19 @@ namespace Gameplay
 
                     if (_currentMoveBlock.Block[i, j] != 0)
                     {
-                        if (_area[posX, posY] == BlockState.SoftBlock || (posY < board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2))
-                        {
-                            MoveBlockFinish(BlockState.SoftBlock);
-                            return;
-                        }
-                        else if (_area[posX, posY] == BlockState.Block || posY < 0)
+                        if (posY < 0 || _area[posX, posY] == BlockState.Block)
                         {
                             MoveBlockFinish(BlockState.Block);
                             return;
                         }
-                        else if (posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0)
+                        
+                        if ((posY < board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2) || _area[posX, posY] == BlockState.SoftBlock)
+                        {
+                            MoveBlockFinish(BlockState.SoftBlock);
+                            return;
+                        }
+                        
+                        if (posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0)
                         {
                             return;
                         }

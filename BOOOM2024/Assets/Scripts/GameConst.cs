@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,25 +10,38 @@ namespace Gameplay
         /// <summary>
         /// 场地高度
         /// </summary>
-        public const int BackgroundHeight = 30;
+        public static int BackgroundHeight => Config.backgroundHeight;
         /// <summary>
         /// 场地宽度
         /// </summary>
-        public const int BackgroundWidth = 40;
+        public static int BackgroundWidth => Config.backgroundWidth;
         /// <summary>
         /// 方块场地高度
         /// </summary>
-        public const int TetrisGroundHeight = 10;
+        public static int TetrisGroundHeight => Config.tetrisGroundHeight;
         /// <summary>
         /// 方块场地宽度
         /// </summary>
-        public const int TetrisGroundWidth = 20;
+        public static int TetrisGroundWidth => Config.tetrisGroundWidth;
 
-        public const float UpdateSeconds = 1;
+        public static float UpdateSeconds = 1;
 
-        public const int BlockSize = 20;
+        public static int BlockSize => Config.blockSize;
 
-        public const float KeyCodeUpdateTime = 0.3f;
+        public static float KeyCodeUpdateTime => Config.keyCodeUpdateTime;
+
+        public static GameConstConfig Config;
+    }
+
+    [Serializable]
+    public class GameConstConfig
+    {
+        public int backgroundHeight = 30;
+        public int backgroundWidth = 40;
+        public int tetrisGroundHeight = 10;
+        public int tetrisGroundWidth = 20;
+        public int blockSize = 20;
+        public float keyCodeUpdateTime = 0.3f;
     }
 
     public enum TetrisState
