@@ -250,7 +250,7 @@ namespace Gameplay
                 }
 
                 
-                for (int j = startY; j <= endY; j++)
+                for (int j = endY; j >= startY; j--)
                 {
                     var count = 0;
                     for (int i = 0; i < GameConst.TetrisGroundWidth; i++)
@@ -267,8 +267,18 @@ namespace Gameplay
                         {
                             _tetrisArea[i, j] = BlockState.Null;
                         }
+
+                        for (int j1 = j + 1; j1 < GameConst.TetrisGroundHeight; j1++)
+                        {
+                            for (int i = 0; i < GameConst.TetrisGroundWidth; i++)
+                            {
+                                _tetrisArea[i, j1 - 1] = _tetrisArea[i, j1];
+                                _tetrisArea[i, j1] = BlockState.Null;
+                            }
+                        }
                     }
                 }
+
             }
             // 落在总场地
             else
@@ -289,7 +299,7 @@ namespace Gameplay
                     }
                 }
                 
-                for (int j = startY; j <= endY; j++)
+                for (int j = endY; j >= startY; j--)
                 {
                     var count = 0;
                     for (int i = 0; i < GameConst.BackgroundWidth; i++)
@@ -305,6 +315,15 @@ namespace Gameplay
                         for (int i = 0; i < GameConst.BackgroundWidth; i++)
                         {
                             _area[i, j] = BlockState.Null;
+                        }
+                        
+                        for (int j1 = j + 1; j1 < GameConst.TetrisGroundHeight; j1++)
+                        {
+                            for (int i = 0; i < GameConst.TetrisGroundWidth; i++)
+                            {
+                                _area[i, j1 - 1] = _area[i, j1];
+                                _area[i, j1] = BlockState.Null;
+                            }
                         }
                     }
                 }
