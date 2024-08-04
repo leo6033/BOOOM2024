@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Engine.Runtime;
 using Engine.SettingModule;
 using Unity.Mathematics;
 using UnityEngine;
@@ -191,13 +192,13 @@ namespace Gameplay
 
                     if (_currentMoveBlock.Block[i, j] != 0)
                     {
-                        if (posY < 0 || _area[posX, posY] == BlockState.Block)
+                        if (_currentMoveBlock.pos.y == 0 || _area[posX, posY] == BlockState.Block)
                         {
                             MoveBlockFinish(BlockState.Block);
                             return;
                         }
                         
-                        if ((posY < board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2) || _area[posX, posY] == BlockState.SoftBlock)
+                        if ((_currentMoveBlock.pos.y == board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2) || _area[posX, posY] == BlockState.SoftBlock)
                         {
                             MoveBlockFinish(BlockState.SoftBlock);
                             return;
@@ -236,6 +237,7 @@ namespace Gameplay
                             pos.y >= GameConst.TetrisGroundHeight)
                         {
                             gameFinish = true;
+                            Debug.Log("Game Finish!!!");
                             return;
                         }
                         
@@ -276,8 +278,8 @@ namespace Gameplay
                 {
                     for (int j = 0; j < _currentMoveBlock.Height; j++)
                     {
-                        var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2 - _tetrisCenter.x + GameConst.TetrisGroundWidth / 2;
-                        var posY = _currentMoveBlock.pos.y + j - _tetrisCenter.y + GameConst.TetrisGroundHeight / 2;
+                        var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
+                        var posY = _currentMoveBlock.pos.y + j;
 
                         if(_currentMoveBlock.Block[i, j] != 0)
                             _area[posX, posY] = value;
@@ -389,8 +391,78 @@ namespace Gameplay
         {
             if (_currentMoveBlock == null)
                 return true;
+
+            var board = GetTetrisAreaBoard();
+            var blockBoard = GetMoveBlockBoard();
             
             var moveDis = 0;
+            var oriPos = _currentMoveBlock.pos;
+            // 方块卡在场地边缘
+            if (_rotateState == TetrisState.Rotate0)
+            {
+                if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
+                {
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                }
+
+                if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
+                {
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                }
+                else if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
+                {
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                }
+            }
+            else if(_rotateState == TetrisState.Rotate90)
+            {
+                if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
+                {
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                }
+                else if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
+                {
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                }
+
+                if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
+                {
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                } 
+            }
+            else if (_rotateState == TetrisState.Rotate180)
+            {
+                if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
+                {
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                }
+
+                if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
+                {
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                }
+                else if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
+                {
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                }
+            }
+            else
+            {
+                if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
+                {
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                }
+                else if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
+                {
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                }
+
+                if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
+                {
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                }
+            }
+            
             if (_rotateState == TetrisState.Rotate0 || _rotateState == TetrisState.Rotate180)
             {
                 for (int i = 0; i < _currentMoveBlock.Width ; i++)
@@ -437,7 +509,13 @@ namespace Gameplay
                 }
             }
 
-            return DoAdjustMoveBlock(moveDis);
+            if (!DoAdjustMoveBlock(moveDis))
+            {
+                _currentMoveBlock.pos = oriPos;
+                return false;
+            }
+
+            return true;
         }
 
         private bool DoAdjustMoveBlock(int move)
@@ -687,6 +765,7 @@ namespace Gameplay
         public bool RotateTetrisArea(int value)
         {
             var oriRotate = _rotateState;
+            var oriTetrisCenter = _tetrisCenter;
             
             var targetRotateState = (TetrisState)(((int)_rotateState + 4 + value) % 4);
 
@@ -714,6 +793,30 @@ namespace Gameplay
             }
 
             _rotateState = targetRotateState;
+
+            targetAreaBoard = GetTargetRotateTetrisAreaBoard(_rotateState);
+            var move = 0;
+            
+            for (int j = targetAreaBoard.y1; j < targetAreaBoard.y2; j++)
+            {
+                var tmp = 0;
+                for (int i = targetAreaBoard.x1; i < targetAreaBoard.x2; i++)
+                {
+                    if (_area[i, j] == BlockState.Block)
+                    {
+                        tmp++;
+                    }
+                }
+
+                move = math.max(move, tmp);
+            }
+
+            if (!MoveTetrisArea(0, move))
+            {
+                _rotateState = oriRotate;
+                _tetrisCenter = oriTetrisCenter;
+                return false;
+            }
             
             UpdateAllBlockValue();
 
@@ -722,6 +825,7 @@ namespace Gameplay
             if (!valid)
             {
                 _rotateState = oriRotate;
+                _tetrisCenter = oriTetrisCenter;
             }
             
             UpdateAllBlockValue();

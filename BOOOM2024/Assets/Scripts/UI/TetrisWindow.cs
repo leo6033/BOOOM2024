@@ -60,7 +60,71 @@ namespace Gameplay.UI
         {
             while (!tetris.gameFinish)
             {
-                if(Time.time > _nextTickTime)
+
+                var dir = Vector2Int.zero;
+                if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    dir = Vector2Int.left;
+                }
+                else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+                {
+                    dir = Vector2Int.down;
+                }
+                else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    dir = Vector2Int.right;
+                }
+                else if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+                {
+                    dir = Vector2Int.up;
+                }
+                else if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    if (tetris.RotateTetrisArea(1))
+                        UpdateAllBlocks();
+                }
+                else if (Input.GetKeyDown(KeyCode.X))
+                {
+                    if (tetris.RotateTetrisArea(-1))
+                        UpdateAllBlocks();
+                }
+                else if (Input.GetKeyDown(KeyCode.C))
+                {
+                    tetris.SolidMoveBlock();
+                    UpdateAllBlocks();
+                }
+
+
+                if (dir != Vector2Int.zero && tetris.MoveTetrisArea(dir.x, dir.y))
+                {
+                    _nextTickTime = _lastDirKeyDownTime + 1;
+
+                    UpdateAllBlocks();
+                    _lastDir = dir;
+                    _dirKeyDown = true;
+                    _lastDirKeyDownTime = Time.time;
+                }
+                else if (_dirKeyDown && _lastDirKeyDownTime + GameConst.KeyCodeUpdateTime < Time.time)
+                {
+                    _nextTickTime = _lastDirKeyDownTime + 1;
+
+                    if (tetris.MoveTetrisArea(_lastDir.x, _lastDir.y))
+                    {
+                        UpdateAllBlocks();
+                    }
+
+                    _lastDirKeyDownTime = Time.time;
+                }
+
+                if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.D) ||
+                    Input.GetKeyUp(KeyCode.W)
+                    || Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow) ||
+                    Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow))
+                {
+                    _dirKeyDown = false;
+                }
+
+                if (Time.time > _nextTickTime)
                 {
                     tetris.Tick();
                     UpdateAllBlocks();
@@ -69,71 +133,75 @@ namespace Gameplay.UI
 
                 yield return null;
             }
+
             UpdateAllBlocks();
         }
         
-        public void Update()
-        {
-            if (tetris.inTick)
-                return;
-            
-            var dir = Vector2Int.zero;
-            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
-            {
-                dir = Vector2Int.left;
-            }
-            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                dir = Vector2Int.down;
-            }
-            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                dir = Vector2Int.right;
-            }
-            else if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-            {
-                dir = Vector2Int.up;
-            }
-            else if (Input.GetKeyDown(KeyCode.Z))
-            {
-                if(tetris.RotateTetrisArea(1))
-                    UpdateAllBlocks();
-            }
-            else if(Input.GetKeyDown(KeyCode.X))
-            {
-                if(tetris.RotateTetrisArea(-1))
-                    UpdateAllBlocks();
-            }
-            else if (Input.GetKeyDown(KeyCode.C))
-            {
-                tetris.SolidMoveBlock();
-                UpdateAllBlocks();
-            }
-            
-            
-            if (dir != Vector2Int.zero && tetris.MoveTetrisArea(dir.x, dir.y))
-            {
-                UpdateAllBlocks();
-                _lastDir = dir;
-                _dirKeyDown = true;
-                _lastDirKeyDownTime = Time.time;
-                _nextTickTime = _lastDirKeyDownTime + 1;
-            }
-            else if(_dirKeyDown && _lastDirKeyDownTime + GameConst.KeyCodeUpdateTime < Time.time)
-            {
-                if (tetris.MoveTetrisArea(_lastDir.x, _lastDir.y))
-                {
-                    UpdateAllBlocks();
-                }
-                _lastDirKeyDownTime = Time.time;
-                _nextTickTime = _lastDirKeyDownTime + 1;
-            }
-
-            if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.W))
-            {
-                _dirKeyDown = false;
-            }
-        }
+        // public void Update()
+        // {
+        //     if (tetris.inTick)
+        //         return;
+        //     
+        //     var dir = Vector2Int.zero;
+        //     if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+        //     {
+        //         dir = Vector2Int.left;
+        //     }
+        //     else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+        //     {
+        //         dir = Vector2Int.down;
+        //     }
+        //     else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+        //     {
+        //         dir = Vector2Int.right;
+        //     }
+        //     else if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+        //     {
+        //         dir = Vector2Int.up;
+        //     }
+        //     else if (Input.GetKeyDown(KeyCode.Z))
+        //     {
+        //         if(tetris.RotateTetrisArea(1))
+        //             UpdateAllBlocks();
+        //     }
+        //     else if(Input.GetKeyDown(KeyCode.X))
+        //     {
+        //         if(tetris.RotateTetrisArea(-1))
+        //             UpdateAllBlocks();
+        //     }
+        //     else if (Input.GetKeyDown(KeyCode.C))
+        //     {
+        //         tetris.SolidMoveBlock();
+        //         UpdateAllBlocks();
+        //     }
+        //     
+        //     
+        //     if (dir != Vector2Int.zero && tetris.MoveTetrisArea(dir.x, dir.y))
+        //     {
+        //         _nextTickTime = _lastDirKeyDownTime + 1;
+        //
+        //         UpdateAllBlocks();
+        //         _lastDir = dir;
+        //         _dirKeyDown = true;
+        //         _lastDirKeyDownTime = Time.time;
+        //     }
+        //     else if(_dirKeyDown && _lastDirKeyDownTime + GameConst.KeyCodeUpdateTime < Time.time)
+        //     {
+        //         _nextTickTime = _lastDirKeyDownTime + 1;
+        //
+        //         if (tetris.MoveTetrisArea(_lastDir.x, _lastDir.y))
+        //         {
+        //             UpdateAllBlocks();
+        //         }
+        //         _lastDirKeyDownTime = Time.time;
+        //     }
+        //
+        //     if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.W) 
+        //         || Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow) || Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow) )
+        //     {
+        //         _dirKeyDown = false;
+        //     }
+        // }
 
         public void UpdateAllBlocks()
         {
