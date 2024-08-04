@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Engine.SettingModule;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Gameplay
 {
@@ -21,6 +23,8 @@ namespace Gameplay
     public class Tetris
     {
         public int this[int x, int y] => _area[x, y]; 
+        public bool gameFinish { get; private set; }
+        public TetrisState RotateState => _rotateState;
 
         private int[,] _area;
         private int[,] _tetrisArea;
@@ -29,6 +33,21 @@ namespace Gameplay
         private Vector2Int _tetrisCenter;
 
         private BTetrisMoveBlock _currentMoveBlock;
+
+        private List<float> _weight;
+        
+        public bool inTick { get; private set; }
+
+        private Dictionary<int, Type> _moveBlocks = new Dictionary<int, Type>()
+        {
+            {(int)MoveBlockType.I, typeof(ITetrisMoveBlock)},
+            {(int)MoveBlockType.L, typeof(LTetrisMoveBlock)},
+            {(int)MoveBlockType.LR, typeof(LRTetrisMoveBlock)},
+            {(int)MoveBlockType.T, typeof(TTetrisMoveBlock)},
+            {(int)MoveBlockType.S, typeof(STetrisMoveBlock)},
+            {(int)MoveBlockType.Z, typeof(ZTetrisMoveBlock)},
+            {(int)MoveBlockType.ZR, typeof(ZRTetrisMoveBlock)}
+        };
 
         public BTetrisMoveBlock CurrentMoveBlock => _currentMoveBlock;
         
@@ -82,6 +101,24 @@ namespace Gameplay
             _tetrisArea = new int[GameConst.TetrisGroundWidth, GameConst.TetrisGroundHeight];
             _tetrisCenter = new Vector2Int(GameConst.BackgroundWidth / 2, GameConst.BackgroundHeight / 2);
             _rotateState = TetrisState.Rotate0;
+            gameFinish = false;
+
+            var table = TableModule.Get("TetrisCube");
+            _weight = new List<float>();
+            int count = 0;
+            inTick = false;
+
+            for (int i = 1; i <= table.csvData.Count; i++)
+            {
+                var weight = (int)table.GetData((uint)i, "Weight");
+                count += weight;
+                _weight.Add(count);
+            }
+
+            for (int i = 0; i < _weight.Count; i++)
+            {
+                _weight[i] /= count;
+            }
 
             UpdateAllBlockValue();
         }
@@ -118,7 +155,18 @@ namespace Gameplay
         /// </summary>
         public void Tick()
         {
+            inTick = true;
             TickMoveBlock();
+            UpdateAllBlockValue();
+            inTick = false;
+        }
+
+        public void SolidMoveBlock()
+        {
+            while (_currentMoveBlock != null && !gameFinish)
+            {
+                TickMoveBlock();
+            }
             UpdateAllBlockValue();
         }
 
@@ -141,19 +189,22 @@ namespace Gameplay
                     var posX = targetPos.x + i - _currentMoveBlock.Width / 2;
                     var posY = targetPos.y + j;
 
-                    if (_area[posX, posY] == BlockState.SoftBlock || (posY < board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2))
+                    if (_currentMoveBlock.Block[i, j] != 0)
                     {
-                        MoveBlockFinish(BlockState.SoftBlock);
-                        return;
-                    }
-                    else if (_area[posX, posY] == BlockState.Block || posY < 0)
-                    {
-                        MoveBlockFinish(BlockState.Block);
-                        return;
-                    }
-                    else if (posY == board.y2 - 1)
-                    {
-                        return;
+                        if (_area[posX, posY] == BlockState.SoftBlock || (posY < board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2))
+                        {
+                            MoveBlockFinish(BlockState.SoftBlock);
+                            return;
+                        }
+                        else if (_area[posX, posY] == BlockState.Block || posY < 0)
+                        {
+                            MoveBlockFinish(BlockState.Block);
+                            return;
+                        }
+                        else if (posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0)
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -179,7 +230,15 @@ namespace Gameplay
                         var pos = func(posX, posY, _tetrisCenter);
                         
                         Debug.Log($"[MoveBlockFinish] {pos}");
-                        _tetrisArea[pos.x, pos.y] = value;
+                        if (pos.x < 0 || pos.x >= GameConst.TetrisGroundWidth || pos.y < 0 ||
+                            pos.y >= GameConst.TetrisGroundHeight)
+                        {
+                            gameFinish = true;
+                            return;
+                        }
+                        
+                        if(_currentMoveBlock.Block[i, j] != 0)
+                            _tetrisArea[pos.x, pos.y] = value;
 
                         startY = math.min(pos.y, startY);
                         endY = math.max(pos.y, endY);
@@ -218,7 +277,8 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2 - _tetrisCenter.x + GameConst.TetrisGroundWidth / 2;
                         var posY = _currentMoveBlock.pos.y + j - _tetrisCenter.y + GameConst.TetrisGroundHeight / 2;
 
-                        _area[posX, posY] = value;
+                        if(_currentMoveBlock.Block[i, j] != 0)
+                            _area[posX, posY] = value;
                         
                         startY = math.min(posY, startY);
                         endY = math.max(posY, endY);
@@ -291,7 +351,15 @@ namespace Gameplay
 
         private void CreateNewMoveBlock()
         {
-            _currentMoveBlock = new ITetrisMoveBlock();
+            var ran = Random.value;
+            for (int i = 0; i < _weight.Count; i++)
+            {
+                if (ran <= _weight[i])
+                {
+                    _currentMoveBlock = Activator.CreateInstance(_moveBlocks[i + 1]) as BTetrisMoveBlock;
+                    break;
+                }
+            }
 
             if (_rotateState == TetrisState.Rotate0)
             {
@@ -331,7 +399,11 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
                         var posY = _currentMoveBlock.pos.y + j;
 
-                        if (_currentMoveBlock.Block[i, j] != 0 && _area[posX, posY] != BlockState.Null)
+                        if (posY >= GameConst.BackgroundHeight || posY < 0)
+                        {
+                            tmp++;
+                        }
+                        else if (_currentMoveBlock.Block[i, j] != 0 && _area[posX, posY] != BlockState.Null)
                         {
                             tmp++;
                         }
@@ -350,7 +422,11 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + j - _currentMoveBlock.Width / 2;
                         var posY = _currentMoveBlock.pos.y + i;
                         
-                        if (_currentMoveBlock.Block[j, i] != 0 &&_area[posX, posY] != BlockState.Null)
+                        if (posX >= GameConst.BackgroundWidth || posX < 0)
+                        {
+                            tmp++;
+                        }
+                        else if (_currentMoveBlock.Block[j, i] != 0 &&_area[posX, posY] != BlockState.Null)
                         {
                             tmp++;
                         }
@@ -539,47 +615,58 @@ namespace Gameplay
                             var posX = i + _currentMoveBlock.pos.x - _currentMoveBlock.Width / 2;
                             var posY = j + _currentMoveBlock.pos.y;
 
-                            if (_area[posX, posY] == BlockState.SoftBlock || 
-                                (y < 0 && posY == board.y1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2) || 
-                                (y < 0 && posY == board.y2 && _rotateState != TetrisState.Rotate0 && posX >= board.x1 && posX < board.x2) || 
-                                (y > 0 && posY == board.y1 - 1 && _rotateState != TetrisState.Rotate180 && posX >= board.x1 && posX < board.x2) || 
-                                (y > 0 && posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0 && posX >= board.x1 && posX < board.x2) || 
-                                (x > 0 && posX == board.x1 - 1 && _rotateState != TetrisState.Rotate90 && posY >= board.y1 && posY < board.y2) || 
-                                (x > 0 && posX == board.x2 - 1 && _rotateState != TetrisState.Rotate270 && posY >= board.y1 && posY < board.y2) ||
-                                (x < 0 && posX == board.x1 && _rotateState != TetrisState.Rotate90 && posY >= board.y1 && posY < board.y2) || 
-                                (x < 0 && posX == board.x2 && _rotateState != TetrisState.Rotate270 && posY >= board.y1 && posY < board.y2))
+                            if (_currentMoveBlock.Block[i, j] != 0)
                             {
-                                var targetPos = _currentMoveBlock.pos + new Vector2Int(x, y);
-                                
-                                var moveBlockBoard = GetMoveBlockBoard();
-                                moveBlockBoard.x1 += x;
-                                moveBlockBoard.x2 += x;
-                                moveBlockBoard.y1 += y;
-                                moveBlockBoard.y2 += y;
-
-                                if (!moveBlockBoard.Valid())
+                                if (_area[posX, posY] == BlockState.SoftBlock ||
+                                    (y < 0 && posY == board.y1 && _rotateState != TetrisState.Rotate180 &&
+                                     posX >= board.x1 && posX < board.x2) ||
+                                    (y < 0 && posY == board.y2 && _rotateState != TetrisState.Rotate0 &&
+                                     posX >= board.x1 && posX < board.x2) ||
+                                    (y > 0 && posY == board.y1 - 1 && _rotateState != TetrisState.Rotate180 &&
+                                     posX >= board.x1 && posX < board.x2) ||
+                                    (y > 0 && posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0 &&
+                                     posX >= board.x1 && posX < board.x2) ||
+                                    (x > 0 && posX == board.x1 - 1 && _rotateState != TetrisState.Rotate90 &&
+                                     posY >= board.y1 && posY < board.y2) ||
+                                    (x > 0 && posX == board.x2 - 1 && _rotateState != TetrisState.Rotate270 &&
+                                     posY >= board.y1 && posY < board.y2) ||
+                                    (x < 0 && posX == board.x1 && _rotateState != TetrisState.Rotate90 &&
+                                     posY >= board.y1 && posY < board.y2) ||
+                                    (x < 0 && posX == board.x2 && _rotateState != TetrisState.Rotate270 &&
+                                     posY >= board.y1 && posY < board.y2))
                                 {
-                                    MoveTetrisArea(-x, -y, false);
-                                    return false;
-                                }
+                                    var targetPos = _currentMoveBlock.pos + new Vector2Int(x, y);
 
-                                for (int i1 = 0; i1 < _currentMoveBlock.Width; i1++)
-                                {
-                                    for (int j1 = 0; j1 < _currentMoveBlock.Height; j1++)
+                                    var moveBlockBoard = GetMoveBlockBoard();
+                                    moveBlockBoard.x1 += x;
+                                    moveBlockBoard.x2 += x;
+                                    moveBlockBoard.y1 += y;
+                                    moveBlockBoard.y2 += y;
+
+                                    if (!moveBlockBoard.Valid())
                                     {
-                                        var posX1 = i1 + _currentMoveBlock.pos.x - _currentMoveBlock.Width / 2 + x;
-                                        var posY1 = j1 + _currentMoveBlock.pos.y + y;
+                                        MoveTetrisArea(-x, -y, false);
+                                        return false;
+                                    }
 
-                                        if (_area[posX1, posY1] == BlockState.Block)
+                                    for (int i1 = 0; i1 < _currentMoveBlock.Width; i1++)
+                                    {
+                                        for (int j1 = 0; j1 < _currentMoveBlock.Height; j1++)
                                         {
-                                            MoveTetrisArea(-x, -y, false);
-                                            return false;
+                                            var posX1 = i1 + _currentMoveBlock.pos.x - _currentMoveBlock.Width / 2 + x;
+                                            var posY1 = j1 + _currentMoveBlock.pos.y + y;
+
+                                            if (_area[posX1, posY1] == BlockState.Block)
+                                            {
+                                                MoveTetrisArea(-x, -y, false);
+                                                return false;
+                                            }
                                         }
                                     }
-                                }
 
-                                _currentMoveBlock.pos = targetPos;
-                                return true;
+                                    _currentMoveBlock.pos = targetPos;
+                                    return true;
+                                }
                             }
                         }
                     }

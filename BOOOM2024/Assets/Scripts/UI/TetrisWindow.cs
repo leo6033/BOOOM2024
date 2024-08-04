@@ -56,7 +56,7 @@ namespace Gameplay.UI
 
         public IEnumerator UpdateCo()
         {
-            while (true)
+            while (!tetris.gameFinish)
             {
                 if(Time.time > _nextTickTime)
                 {
@@ -67,28 +67,32 @@ namespace Gameplay.UI
 
                 yield return null;
             }
+            UpdateAllBlocks();
         }
         
         public void Update()
         {
+            if (tetris.inTick)
+                return;
+            
             var dir = Vector2Int.zero;
             if (Input.GetKeyDown(KeyCode.A))
             {
                 dir = Vector2Int.left;
             }
-            else if (Input.GetKeyDown(KeyCode.S))
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
             {
                 dir = Vector2Int.down;
             }
-            else if (Input.GetKeyDown(KeyCode.D))
+            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
             {
                 dir = Vector2Int.right;
             }
-            else if (Input.GetKeyDown(KeyCode.W))
+            else if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
                 dir = Vector2Int.up;
             }
-            else if (Input.GetKeyDown(KeyCode.Z))
+            else if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 if(tetris.RotateTetrisArea(1))
                     UpdateAllBlocks();
@@ -97,6 +101,11 @@ namespace Gameplay.UI
             {
                 if(tetris.RotateTetrisArea(-1))
                     UpdateAllBlocks();
+            }
+            else if (Input.GetKeyDown(KeyCode.C))
+            {
+                tetris.SolidMoveBlock();
+                UpdateAllBlocks();
             }
             
             
@@ -139,6 +148,14 @@ namespace Gameplay.UI
                         if (i >= board.x1 && i < board.x2 && j >= board.y1 && j < board.y2)
                         {
                             _tetrisBlocks[i, j].color = Color.gray;
+                            if ((tetris.RotateState == TetrisState.Rotate0 && j == board.y2 - 1) || 
+                                (tetris.RotateState == TetrisState.Rotate90 && i == board.x1) ||
+                                (tetris.RotateState == TetrisState.Rotate180 && j == board.y1) ||
+                                (tetris.RotateState == TetrisState.Rotate270 && i == board.x2 - 1))
+                            {
+                                _tetrisBlocks[i, j].color = Color.cyan;
+                            }
+                                
                         }
                         else
                         {
@@ -165,7 +182,8 @@ namespace Gameplay.UI
                         var posX = tetris.CurrentMoveBlock.pos.x + i - tetris.CurrentMoveBlock.Width / 2;
                         var posY = tetris.CurrentMoveBlock.pos.y + j;
                         
-                        _tetrisBlocks[posX, posY].color = Color.black;
+                        if(tetris.CurrentMoveBlock.Block[i, j] != 0)
+                            _tetrisBlocks[posX, posY].color = Color.black;
                     }
                 }
             }
