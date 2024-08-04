@@ -26,6 +26,8 @@ namespace Gameplay
 
         public static float UpdateSeconds = 1;
 
+        public static bool UseReset => Config.useReset;
+
         public static int BlockSize => Config.blockSize;
 
         public static float KeyCodeUpdateTime => Config.keyCodeUpdateTime;
@@ -42,6 +44,7 @@ namespace Gameplay
         public int tetrisGroundWidth = 20;
         public int blockSize = 20;
         public float keyCodeUpdateTime = 0.3f;
+        public bool useReset = false;
     }
 
     public enum TetrisState

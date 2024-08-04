@@ -101,7 +101,8 @@ namespace Gameplay.UI
                     _lastDir = dir;
                     _dirKeyDown = true;
                     _lastDirKeyDownTime = Time.time;
-                    _nextTickTime = _lastDirKeyDownTime + 1;
+                    if(GameConst.UseReset)
+                        _nextTickTime = _lastDirKeyDownTime + 1;
                 }
                 else if (_dirKeyDown && _lastDirKeyDownTime + GameConst.KeyCodeUpdateTime < Time.time)
                 {
@@ -111,7 +112,8 @@ namespace Gameplay.UI
                     }
 
                     _lastDirKeyDownTime = Time.time;
-                    _nextTickTime = _lastDirKeyDownTime + 1;
+                    if(GameConst.UseReset)
+                        _nextTickTime = _lastDirKeyDownTime + 1;
                 }
 
                 if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.S) || Input.GetKeyUp(KeyCode.D) ||
