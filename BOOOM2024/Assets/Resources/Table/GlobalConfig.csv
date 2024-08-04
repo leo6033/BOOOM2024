@@ -3,3 +3,7 @@ ID,常量名,枚举类型,参数1,参数2,备注
 int,string,int,int,int,
 1,Reset_Limit,1,5,,方块移动被重置的次数上限
 2,Destroy_TimeCount,2,3000,,方块停留在外边缘时，被销毁前的时间，单位为毫秒
+3,CubeArea_width,3,10,,方块场地的宽度，单位是单位格个数
+4,CubeArea_height,4,20,,方块场地的高度，单位是单位格个数
+5,BackGroundArea_width,5,40,,总场地的宽度，单位是单位格个数
+6,BackGroundArea_height,6,30,,总场地的高度，单位是单位格个数
