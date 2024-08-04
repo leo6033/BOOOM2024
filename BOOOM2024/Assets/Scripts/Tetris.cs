@@ -24,6 +24,7 @@ namespace Gameplay
     {
         public int this[int x, int y] => _area[x, y]; 
         public bool gameFinish { get; private set; }
+        public TetrisState RotateState => _rotateState;
 
         private int[,] _area;
         private int[,] _tetrisArea;
@@ -398,7 +399,11 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
                         var posY = _currentMoveBlock.pos.y + j;
 
-                        if (_currentMoveBlock.Block[i, j] != 0 && _area[posX, posY] != BlockState.Null)
+                        if (posY >= GameConst.BackgroundHeight || posY < 0)
+                        {
+                            tmp++;
+                        }
+                        else if (_currentMoveBlock.Block[i, j] != 0 && _area[posX, posY] != BlockState.Null)
                         {
                             tmp++;
                         }
@@ -417,7 +422,11 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + j - _currentMoveBlock.Width / 2;
                         var posY = _currentMoveBlock.pos.y + i;
                         
-                        if (_currentMoveBlock.Block[j, i] != 0 &&_area[posX, posY] != BlockState.Null)
+                        if (posX >= GameConst.BackgroundWidth || posX < 0)
+                        {
+                            tmp++;
+                        }
+                        else if (_currentMoveBlock.Block[j, i] != 0 &&_area[posX, posY] != BlockState.Null)
                         {
                             tmp++;
                         }

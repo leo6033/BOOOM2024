@@ -148,6 +148,14 @@ namespace Gameplay.UI
                         if (i >= board.x1 && i < board.x2 && j >= board.y1 && j < board.y2)
                         {
                             _tetrisBlocks[i, j].color = Color.gray;
+                            if ((tetris.RotateState == TetrisState.Rotate0 && j == board.y2 - 1) || 
+                                (tetris.RotateState == TetrisState.Rotate90 && i == board.x1) ||
+                                (tetris.RotateState == TetrisState.Rotate180 && j == board.y1) ||
+                                (tetris.RotateState == TetrisState.Rotate270 && i == board.x2 - 1))
+                            {
+                                _tetrisBlocks[i, j].color = Color.cyan;
+                            }
+                                
                         }
                         else
                         {
