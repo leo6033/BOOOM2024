@@ -1,6 +1,6 @@
 Level,TeleportValue,TeleportValueAdd,TeleportValueDecrease,SpeedTime,Score,ScoreCost,BombSolidTime
 速度等级,对应吸附值,吸附值增量,吸附值下降量,速度倍率,分数,降速分数消耗,生成炸弹块所需固定方块数量
-int,int,int,int,int,int,int,int
+int,int,int,int,float,int,int,int
 1,0,100,20,1,100,0,7
 2,1000,100,20,1.1,200,500,7
 3,2000,100,20,1.2,300,1000,7
