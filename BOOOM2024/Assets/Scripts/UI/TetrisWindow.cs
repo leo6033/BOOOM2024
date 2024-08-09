@@ -58,7 +58,7 @@ namespace Gameplay.UI
 
         public IEnumerator UpdateCo()
         {
-            while (!tetris.gameFinish)
+            while (!tetris.GameFinish)
             {
 
                 var dir = Vector2Int.zero;
@@ -92,6 +92,14 @@ namespace Gameplay.UI
                 {
                     tetris.SolidMoveBlock();
                     UpdateAllBlocks();
+                }
+                else if (Input.GetKeyDown(KeyCode.V))
+                {
+                    tetris.DecreaseSpeedLevel();
+                }
+                else if (Input.GetKeyDown(KeyCode.B))
+                {
+                    tetris.SetNextBomb();
                 }
 
 
@@ -127,9 +135,11 @@ namespace Gameplay.UI
                 if (Time.time > _nextTickTime)
                 {
                     tetris.Tick();
-                    UpdateAllBlocks();
-                    _nextTickTime += 1;
+                    
+                    _nextTickTime += 1f / tetris.LevelInfo.speedTime;
                 }
+                
+                UpdateAllBlocks();
 
                 yield return null;
             }
@@ -235,6 +245,10 @@ namespace Gameplay.UI
                     else if (tetris[i, j] == BlockState.SoftBlock)
                     {
                         _tetrisBlocks[i, j].color = Color.blue;
+                    }
+                    else if (tetris[i, j] == BlockState.Bomb)
+                    {
+                        _tetrisBlocks[i, j].color = Color.yellow;
                     }
                     else
                     {

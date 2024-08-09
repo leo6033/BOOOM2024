@@ -24,11 +24,17 @@ namespace Gameplay
         /// </summary>
         public static int TetrisGroundWidth => Config.tetrisGroundWidth;
 
-        public static float UpdateSeconds = 1;
+        public static float UpdateSeconds => Config.updateSeconds;
 
         public static bool UseReset => Config.useReset;
 
         public static int BlockSize => Config.blockSize;
+
+        public static int BombLimit => Config.bombLimit;
+
+        public static int MaxSpeedLevel => Config.maxSpeedLevel;
+
+        public static int MinBombDistance => Config.minBombDistance;
 
         public static float KeyCodeUpdateTime => Config.keyCodeUpdateTime;
 
@@ -45,6 +51,10 @@ namespace Gameplay
         public int blockSize = 20;
         public float keyCodeUpdateTime = 0.3f;
         public bool useReset = false;
+        public int bombLimit = 3;
+        public float updateSeconds = 1f;
+        public int maxSpeedLevel = 7;
+        public int minBombDistance = 10;
     }
 
     public enum TetrisState
@@ -60,6 +70,7 @@ namespace Gameplay
         public const int Null = 0;
         public const int SoftBlock = 1;
         public const int Block = 2;
+        public const int Bomb = 3;
     }
 
     public enum MoveBlockType
@@ -70,6 +81,7 @@ namespace Gameplay
         I = 4,
         S = 5,
         Z = 6,
-        ZR = 7
+        ZR = 7,
+        Bomb = 100,
     }
 }

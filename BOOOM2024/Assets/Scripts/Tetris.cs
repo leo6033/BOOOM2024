@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Xml.Schema;
 using Engine.Runtime;
 using Engine.SettingModule;
 using Unity.Mathematics;
@@ -21,11 +22,98 @@ namespace Gameplay
             return x1 >= 0 && x2 < GameConst.BackgroundWidth && y1 >= 0 && y2 < GameConst.BackgroundHeight;
         }
     }
+
+    public struct TetrisLevelInfo
+    {
+        public int level;
+        public int teleportValue;
+        public int teleportValueAdd;
+        public int teleportValueDecrease;
+        public float speedTime;
+        public int score;
+        public int scoreCost;
+        public int bombSolidTime;
+
+        public TetrisLevelInfo(int level)
+        {
+            var table = TableModule.Get("SpeedLevel");
+            this.level = level;
+            teleportValue = (int)table.GetData((uint)level, "TeleportValue");
+            teleportValueAdd = (int)table.GetData((uint)level, "TeleportValueAdd");
+            teleportValueDecrease = (int)table.GetData((uint)level, "TeleportValueDecrease");
+            speedTime = (float)table.GetData((uint)level, "SpeedTime");
+            score = (int)table.GetData((uint)level, "Score");
+            scoreCost = (int)table.GetData((uint)level, "ScoreCost");
+            bombSolidTime = (int)table.GetData((uint)level, "BombSolidTime");
+        }
+    }
+
+    public struct BombInfo
+    {
+        public Vector2Int pos;
+        public bool hasBomb;
+        public int remainBlockNum;
+    }
     
     public class Tetris
     {
         public int this[int x, int y] => _area[x, y]; 
-        public bool gameFinish { get; private set; }
+        public bool GameFinish { get; private set; }
+        public float Speed { get; private set; }
+        public TetrisLevelInfo LevelInfo { get; private set; }
+
+        private BombInfo _bombInfo;
+        public BombInfo BombInfo => _bombInfo;
+
+        public int SpeedLevel
+        {
+            get => _speedLevel;
+            private set
+            {
+                _speedLevel = value;
+                if (_speedLevel > GameConst.MaxSpeedLevel)
+                    _speedLevel = GameConst.MaxSpeedLevel;
+                else if(_speedLevel == 0)
+                    _speedLevel = 1;
+
+                LevelInfo = new TetrisLevelInfo(_speedLevel);
+                Speed = 1f / LevelInfo.speedTime;
+            }
+        }
+
+        public int Score { get; private set; }
+
+        private int _teleportValue;
+
+        public int TeleportValue
+        {
+            get => _teleportValue;
+            private set
+            {
+                if (_teleportValue > value)
+                {
+                    if (SpeedLevel < GameConst.MaxSpeedLevel)
+                    {
+                        var levelInfo = new TetrisLevelInfo(SpeedLevel + 1);
+                        if (_teleportValue >= levelInfo.teleportValue)
+                        {
+                            SpeedLevel++;
+                        }
+                    }
+                }
+                else if (_teleportValue < value)
+                {
+                    if (_teleportValue < LevelInfo.teleportValue)
+                    {
+                        SpeedLevel--;
+                    }
+                }
+                _teleportValue = math.max(0, value);
+            }
+        }
+        
+
+        private int _speedLevel;
         public TetrisState RotateState => _rotateState;
 
         private int[,] _area;
@@ -37,6 +125,9 @@ namespace Gameplay
         private BTetrisMoveBlock _currentMoveBlock;
 
         private List<float> _weight;
+
+        private int _bombNum;
+        private bool _nextIsBomb;
         
         public bool inTick { get; private set; }
 
@@ -103,7 +194,14 @@ namespace Gameplay
             _tetrisArea = new int[GameConst.TetrisGroundWidth, GameConst.TetrisGroundHeight];
             _tetrisCenter = new Vector2Int(GameConst.BackgroundWidth / 2, GameConst.BackgroundHeight / 2);
             _rotateState = TetrisState.Rotate0;
-            gameFinish = false;
+            GameFinish = false;
+            
+            _nextIsBomb = false;
+            _bombNum = 0;
+            _teleportValue = 0;
+            SpeedLevel = 1;
+            Score = 0;
+            _bombInfo = new BombInfo() { hasBomb = false, pos = Vector2Int.zero, remainBlockNum=LevelInfo.bombSolidTime };
 
             var table = TableModule.Get("TetrisCube");
             _weight = new List<float>();
@@ -149,6 +247,9 @@ namespace Gameplay
                     _area[pos.x, pos.y] = _tetrisArea[i, j];
                 }
             }
+
+            if (_bombInfo.hasBomb)
+                _area[_bombInfo.pos.x, _bombInfo.pos.y] = BlockState.Bomb;
         }
 
         /// <summary>
@@ -158,17 +259,35 @@ namespace Gameplay
         {
             inTick = true;
             TickMoveBlock();
+
+            // 创建炸弹
+            if (_bombInfo.remainBlockNum <= 0 && _bombInfo.hasBomb == false && _bombNum < GameConst.BombLimit)
+            {
+                var tetrisBoard = GetTetrisAreaBoard();
+                var x = Random.Range(tetrisBoard.x2 + GameConst.MinBombDistance,
+                    tetrisBoard.x2 + GameConst.BackgroundWidth - GameConst.MinBombDistance) % GameConst.BackgroundWidth;
+                var y = Random.Range(tetrisBoard.y2 + GameConst.MinBombDistance,
+                            tetrisBoard.y2 + GameConst.BackgroundHeight - GameConst.MinBombDistance) %
+                        GameConst.BackgroundHeight;
+                _bombInfo.pos = new Vector2Int(x, y);
+                _bombInfo.hasBomb = true;
+            }
+            
             UpdateAllBlockValue();
+
+            TeleportValue -= LevelInfo.teleportValueDecrease;
             inTick = false;
         }
 
         public void SolidMoveBlock()
         {
-            while (_currentMoveBlock != null && !gameFinish)
+            while (_currentMoveBlock != null && !GameFinish)
             {
                 TickMoveBlock();
             }
             UpdateAllBlockValue();
+
+            TeleportValue += LevelInfo.teleportValueAdd;
         }
 
         private void TickMoveBlock()
@@ -221,8 +340,33 @@ namespace Gameplay
         {
             var startY = GameConst.BackgroundHeight;
             var endY = 0;
+            
+            // 炸弹块
+            if (_currentMoveBlock.BlockType == MoveBlockType.Bomb)
+            {
+                var func = areaPosToTetrisPosFuncs[_rotateState];
+                for (int i = -1; i <= 1; i++)
+                {
+                    for (int j = -1; j <= 1; j++)
+                    {
+                        var posX = _currentMoveBlock.pos.x + i;
+                        var posY = _currentMoveBlock.pos.y + j;
+                        
+                        var pos = func(posX, posY, _tetrisCenter);
+                        if (pos.x >= 0 && pos.x < GameConst.TetrisGroundWidth && pos.y >= 0 &&
+                            pos.y < GameConst.TetrisGroundHeight)
+                        {
+                            _tetrisArea[pos.x, pos.y] = 0;
+                        }
+                        else
+                        {
+                            _area[posX, posY] = 0;
+                        }
+                    }
+                }
+            }
             // 落在移动场地内
-            if (value == BlockState.SoftBlock)
+            else if (value == BlockState.SoftBlock)
             {
                 var func = areaPosToTetrisPosFuncs[_rotateState];
                 for (int i = 0; i < _currentMoveBlock.Width; i++)
@@ -237,19 +381,22 @@ namespace Gameplay
                         if (pos.x < 0 || pos.x >= GameConst.TetrisGroundWidth || pos.y < 0 ||
                             pos.y >= GameConst.TetrisGroundHeight)
                         {
-                            gameFinish = true;
+                            GameFinish = true;
                             Debug.Log("Game Finish!!!");
                             return;
                         }
-                        
-                        if(_currentMoveBlock.Block[i, j] != 0)
+
+                        if (_currentMoveBlock.Block[i, j] != 0)
+                        {
                             _tetrisArea[pos.x, pos.y] = value;
+                            _bombInfo.remainBlockNum--;
+                        }
+                            
 
                         startY = math.min(pos.y, startY);
                         endY = math.max(pos.y, endY);
                     }
                 }
-
                 
                 for (int j = endY; j >= startY; j--)
                 {
@@ -277,6 +424,8 @@ namespace Gameplay
                                 _tetrisArea[i, j1] = BlockState.Null;
                             }
                         }
+
+                        Score += LevelInfo.score;
                     }
                 }
 
@@ -284,7 +433,6 @@ namespace Gameplay
             // 落在总场地
             else
             {
-
                 for (int i = 0; i < _currentMoveBlock.Width; i++)
                 {
                     for (int j = 0; j < _currentMoveBlock.Height; j++)
@@ -292,8 +440,11 @@ namespace Gameplay
                         var posX = _currentMoveBlock.pos.x + i - _currentMoveBlock.Width / 2;
                         var posY = _currentMoveBlock.pos.y + j;
 
-                        if(_currentMoveBlock.Block[i, j] != 0)
+                        if (_currentMoveBlock.Block[i, j] != 0)
+                        {
                             _area[posX, posY] = value;
+                            _bombInfo.remainBlockNum--;
+                        }
                         
                         startY = math.min(posY, startY);
                         endY = math.max(posY, endY);
@@ -326,6 +477,8 @@ namespace Gameplay
                                 _area[i, j1] = BlockState.Null;
                             }
                         }
+                        
+                        Score += LevelInfo.score;
                     }
                 }
             }
@@ -377,14 +530,24 @@ namespace Gameplay
         {
             Debug.Log("CreateNewMoveBlock");
             var ran = Random.value;
-            for (int i = 0; i < _weight.Count; i++)
+            if (_nextIsBomb)
             {
-                if (ran <= _weight[i])
+                _currentMoveBlock = Activator.CreateInstance<BombTetrisMoveBlock>();
+                _nextIsBomb = false;
+                _bombNum -= 1;
+            }
+            else
+            {
+                for (int i = 0; i < _weight.Count; i++)
                 {
-                    _currentMoveBlock = Activator.CreateInstance(_moveBlocks[i + 1]) as BTetrisMoveBlock;
-                    break;
+                    if (ran <= _weight[i])
+                    {
+                        _currentMoveBlock = Activator.CreateInstance(_moveBlocks[i + 1]) as BTetrisMoveBlock;
+                        break;
+                    }
                 }
             }
+
 
             if (_rotateState == TetrisState.Rotate0)
             {
@@ -798,6 +961,7 @@ namespace Gameplay
                                         }
                                     }
 
+                                    CheckIsBombInTetrisArea();
                                     _currentMoveBlock.pos = targetPos;
                                     return true;
                                 }
@@ -805,6 +969,8 @@ namespace Gameplay
                         }
                     }
                 }
+
+                CheckIsBombInTetrisArea();
                     
                 return true;
             }
@@ -871,6 +1037,8 @@ namespace Gameplay
                 _tetrisCenter = oriTetrisCenter;
                 return false;
             }
+
+            CheckIsBombInTetrisArea();
             
             UpdateAllBlockValue();
 
@@ -887,5 +1055,39 @@ namespace Gameplay
             return valid;
         }
         
+        public void CheckIsBombInTetrisArea()
+        {
+            var board = GetTetrisAreaBoard();
+            if (!_bombInfo.hasBomb)
+                return;
+
+            if (_bombInfo.pos.x < board.x2 && _bombInfo.pos.x >= board.x1 && _bombInfo.pos.y < board.y2 &&
+                _bombInfo.pos.y >= board.y1)
+            {
+                _bombInfo.hasBomb = false;
+                _bombInfo.remainBlockNum = LevelInfo.bombSolidTime;
+                _bombNum += 1;
+            }
+        }
+
+        public void DecreaseSpeedLevel()
+        {
+            if(SpeedLevel <= 1)
+                return;
+            Score -= LevelInfo.scoreCost;
+            var levelInfo = new TetrisLevelInfo(SpeedLevel - 1);
+            TeleportValue -= (LevelInfo.teleportValue - levelInfo.teleportValue);
+        }
+
+        public bool SetNextBomb()
+        {
+            if (_bombNum > 0)
+            {
+                _nextIsBomb = true;
+                return true;
+            }
+
+            return false;
+        }
     }
 }

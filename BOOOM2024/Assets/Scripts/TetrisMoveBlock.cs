@@ -83,4 +83,15 @@ namespace Gameplay
         
         private static readonly int[,] _block = new int[,] { {1, 0}, {1, 1}, {0, 1}};
     }
+
+    public class BombTetrisMoveBlock : BTetrisMoveBlock
+    {
+        public override int Height => 1;
+        public override int Width => 1;
+        public override MoveBlockType BlockType => MoveBlockType.Bomb;
+        
+        public override int[,] Block => _block;
+        
+        private static readonly int[,] _block = new int[,] { {1}};
+    }
 }
