@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Disc0ver.Engine;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,16 @@ namespace Gameplay.UI
         
         private Image[,] _tetrisBlocks;
         public RectTransform areaRectTransform;
+
+        public Text scoreText;
+        public Text bombNumText;
+        public Text bombNumMaxText;
+        public Button btnSetting;
+        private UISwitchImage _btnSettingImg;
+        public Button btnIntroduce;
+        private UISwitchImage _btnIntroduceImg;
+        public UISwitchImage bombSwitchImg;
+        public UISwitchImage speedImg;
 
         private bool _dirKeyDown = false;
         private float _lastDirKeyDownTime = 0f;
@@ -53,6 +64,11 @@ namespace Gameplay.UI
 
         private void Start()
         {
+            bombNumMaxText.text = $"{GameConst.BombLimit}";
+            scoreText.text = $"{tetris.Score}";
+            bombNumText.text = $"{tetris.BombInfo.remainBlockNum}";
+            speedImg.SetIndex(tetris.SpeedLevel - 1);
+            
             StartCoroutine(UpdateCo());
         }
 
@@ -140,6 +156,10 @@ namespace Gameplay.UI
                 }
                 
                 UpdateAllBlocks();
+
+                scoreText.text = $"{tetris.Score}";
+                bombNumText.text = $"{tetris.BombNum}";
+                speedImg.SetIndex(tetris.SpeedLevel - 1);
 
                 yield return null;
             }

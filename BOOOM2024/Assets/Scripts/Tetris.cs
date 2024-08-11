@@ -126,6 +126,7 @@ namespace Gameplay
 
         private List<float> _weight;
 
+        public int BombNum => _bombNum;
         private int _bombNum;
         private bool _nextIsBomb;
         
