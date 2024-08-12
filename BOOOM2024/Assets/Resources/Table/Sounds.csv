@@ -1,0 +1,9 @@
+SoundsID,Sounds_string,Type,ResourceID,PlayCD,##Notes
+音频调用ID,音频常量名,类型,音频资源调用ID,播放间隔,备注
+int,string,int,intlist,int,string
+1,SFX_Elimate,2,1|2|3,,方块消除
+2,SFX_turnToSolid,2,4,,方块固定
+3,SFX_PickBomb,2,5,,捡起炸弹
+4,SFX_UseBomb,2,6,,使用炸弹
+5,SFX_BombEffect,2,7,,炸弹爆炸
+6,BGM_Tetris,1,8,,游玩BGM

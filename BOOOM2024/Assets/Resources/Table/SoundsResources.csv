@@ -5,3 +5,7 @@ int,string
 2,Sounds\SFX_Elimate2
 3,Sounds\SFX_Elimate3
 4,Sounds\SFX_Tetris_TurnToSolid
+5,Sounds\SFX_PickBomb
+6,Sounds\SFX_UseBomb
+7,Sounds\SFX_BombEffect
+8,Sounds\BGM_Tetris
