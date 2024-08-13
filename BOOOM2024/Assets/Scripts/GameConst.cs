@@ -87,4 +87,12 @@ namespace Gameplay
         ZR = 7,
         Bomb = 100,
     }
+
+    public static class SoundId
+    {
+        public static readonly int BlockSolid = 4;
+        public static readonly int PickBomb = 5;
+        public static readonly int UseBomb = 6;
+        public static readonly int BombEffect = 7;
+    }
 }

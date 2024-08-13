@@ -352,6 +352,7 @@ namespace Gameplay
         {
             var startY = GameConst.BackgroundHeight;
             var endY = 0;
+            var startScore = Score;
             
             // 炸弹块
             if (_currentMoveBlock.BlockType == MoveBlockType.Bomb)
@@ -376,6 +377,7 @@ namespace Gameplay
                         }
                     }
                 }
+                SoundModule.Instance.PlayAudio(SoundId.BombEffect);
             }
             // 落在移动场地内
             else if (value == BlockState.SoftBlock)
@@ -495,6 +497,15 @@ namespace Gameplay
                 }
             }
 
+            if (Score > startScore)
+            {
+                SoundModule.Instance.PlayElimate();
+            }
+            else if (_currentMoveBlock.BlockType != MoveBlockType.Bomb)
+            {
+                SoundModule.Instance.PlayAudio(SoundId.BlockSolid);
+            }
+            
             _currentMoveBlock = null;
         }
 
@@ -1079,6 +1090,7 @@ namespace Gameplay
                 _bombInfo.hasBomb = false;
                 _bombInfo.remainBlockNum = LevelInfo.bombSolidTime;
                 _bombNum += 1;
+                SoundModule.Instance.PlayAudio(SoundId.PickBomb);
             }
         }
 
@@ -1093,9 +1105,10 @@ namespace Gameplay
 
         public bool SetNextBomb()
         {
-            if (_bombNum > 0)
+            if (_bombNum > 0 && !_nextIsBomb)
             {
                 _nextIsBomb = true;
+                SoundModule.Instance.PlayAudio(SoundId.UseBomb);
                 return true;
             }
 
