@@ -129,6 +129,8 @@ namespace Gameplay
         public int BombNum => _bombNum;
         private int _bombNum;
         private bool _nextIsBomb;
+
+        private float _blockedTimes = 0;
         
         public bool inTick { get; private set; }
 
@@ -200,6 +202,7 @@ namespace Gameplay
             _nextIsBomb = false;
             _bombNum = 0;
             _teleportValue = 0;
+            _blockedTimes = 0;
             SpeedLevel = 1;
             Score = 0;
             _bombInfo = new BombInfo() { hasBomb = false, pos = Vector2Int.zero, remainBlockNum=LevelInfo.bombSolidTime };
@@ -293,8 +296,14 @@ namespace Gameplay
 
         private void TickMoveBlock()
         {
+            if (_blockedTimes > GameConst.DestroyTimeCount)
+            {
+                _currentMoveBlock = null;
+            }
+            
             if (_currentMoveBlock == null)
             {
+                _blockedTimes = 0;
                 CreateNewMoveBlock();
                 return;
             }
@@ -320,6 +329,7 @@ namespace Gameplay
                         
                         if (posY == board.y2 - 1 && _rotateState != TetrisState.Rotate0)
                         {
+                            _blockedTimes += (1f  /LevelInfo.speedTime);
                             return;
                         }
                         
@@ -334,6 +344,7 @@ namespace Gameplay
                 }
             }
 
+            _blockedTimes = 0;
             _currentMoveBlock.pos = targetPos;
         }
 

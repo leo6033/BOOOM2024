@@ -38,6 +38,8 @@ namespace Gameplay
 
         public static float KeyCodeUpdateTime => Config.keyCodeUpdateTime;
 
+        public static float DestroyTimeCount => Config.destroyTimeCount;
+
         public static GameConstConfig Config;
     }
 
@@ -55,6 +57,7 @@ namespace Gameplay
         public float updateSeconds = 1f;
         public int maxSpeedLevel = 7;
         public int minBombDistance = 10;
+        public float destroyTimeCount = 3;
     }
 
     public enum TetrisState
