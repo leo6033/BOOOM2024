@@ -12,6 +12,8 @@ namespace Gameplay.UI
         public Tetris tetris;
         public GameObject blockPrefab;
         public GameConstConfig config;
+        public RectTransform tetrisArea;
+
         
         private Image[,] _tetrisBlocks;
         public RectTransform areaRectTransform;
@@ -53,8 +55,8 @@ namespace Gameplay.UI
                     var rectTransform = _tetrisBlocks[i, j].GetComponent<RectTransform>();
                     
                     rectTransform.anchoredPosition =
-                        new Vector2((i - GameConst.BackgroundWidth / 2) * GameConst.BlockSize,
-                            (j - GameConst.BackgroundHeight / 2) * GameConst.BlockSize);
+                        new Vector2((i - GameConst.BackgroundWidth / 2 + 0.5f) * GameConst.BlockSize ,
+                            (j - GameConst.BackgroundHeight / 2 + 0.5f) * GameConst.BlockSize);
                     rectTransform.sizeDelta = size;
                 }
             }
@@ -243,37 +245,46 @@ namespace Gameplay.UI
             {
                 for (int j = 0; j < GameConst.BackgroundHeight; j++)
                 {
-                    if (tetris[i, j] == BlockState.Null)
+                    var color = Color.white;
+                    // if (tetris[i, j] == BlockState.Null)
+                    // {
+                    //     if (i >= board.x1 && i < board.x2 && j >= board.y1 && j < board.y2)
+                    //     {
+                    //         _tetrisBlocks[i, j].color = Color.gray;
+                    //         if ((tetris.RotateState == TetrisState.Rotate0 && j == board.y2 - 1) || 
+                    //             (tetris.RotateState == TetrisState.Rotate90 && i == board.x1) ||
+                    //             (tetris.RotateState == TetrisState.Rotate180 && j == board.y1) ||
+                    //             (tetris.RotateState == TetrisState.Rotate270 && i == board.x2 - 1))
+                    //         {
+                    //             color = Color.cyan;
+                    //         }
+                    //             
+                    //     }
+                    //     else
+                    //     {
+                    //         color = Color.white;
+                    //         color.a = 0;
+                    //     }
+                    // }
+                    // else 
+                    if (tetris[i, j] == BlockState.SoftBlock)
                     {
-                        if (i >= board.x1 && i < board.x2 && j >= board.y1 && j < board.y2)
-                        {
-                            _tetrisBlocks[i, j].color = Color.gray;
-                            if ((tetris.RotateState == TetrisState.Rotate0 && j == board.y2 - 1) || 
-                                (tetris.RotateState == TetrisState.Rotate90 && i == board.x1) ||
-                                (tetris.RotateState == TetrisState.Rotate180 && j == board.y1) ||
-                                (tetris.RotateState == TetrisState.Rotate270 && i == board.x2 - 1))
-                            {
-                                _tetrisBlocks[i, j].color = Color.cyan;
-                            }
-                                
-                        }
-                        else
-                        {
-                            _tetrisBlocks[i, j].color = Color.white;
-                        }
-                    }
-                    else if (tetris[i, j] == BlockState.SoftBlock)
-                    {
-                        _tetrisBlocks[i, j].color = Color.blue;
+                        color = Color.blue;
                     }
                     else if (tetris[i, j] == BlockState.Bomb)
                     {
-                        _tetrisBlocks[i, j].color = Color.yellow;
+                        color = Color.yellow;
+                    }
+                    else if(tetris[i, j] == BlockState.Block)
+                    {
+                        color = Color.red;
                     }
                     else
                     {
-                        _tetrisBlocks[i, j].color = Color.red;
+                        color.a = 0;
                     }
+
+                    _tetrisBlocks[i, j].color = color;
                 }
             }
 
@@ -291,6 +302,29 @@ namespace Gameplay.UI
                     }
                 }
             }
+
+            tetrisArea.anchoredPosition = new Vector2((tetris.Center.x - GameConst.BackgroundWidth / 2) * GameConst.BlockSize ,
+                (tetris.Center.y - GameConst.BackgroundHeight / 2) * GameConst.BlockSize);
+
+            var rotation = tetrisArea.rotation;
+            if (tetris.RotateState == TetrisState.Rotate0)
+            {
+                rotation.eulerAngles = new Vector3(0, 0, 0);
+            }
+            else if (tetris.RotateState == TetrisState.Rotate90)
+            {
+                rotation.eulerAngles = new Vector3(0, 0, 90);
+            }
+            else if(tetris.RotateState == TetrisState.Rotate180)
+            {
+                rotation.eulerAngles = new Vector3(0, 0, 180);
+            }
+            else
+            {
+                rotation.eulerAngles = new Vector3(0, 0, 270);
+            }
+
+            tetrisArea.rotation = rotation;
         }
     }
 }

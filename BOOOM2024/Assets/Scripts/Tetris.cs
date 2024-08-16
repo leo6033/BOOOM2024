@@ -120,6 +120,7 @@ namespace Gameplay
         private int[,] _tetrisArea;
         private TetrisState _rotateState;
 
+        public Vector2Int Center => _tetrisCenter;
         private Vector2Int _tetrisCenter;
 
         private BTetrisMoveBlock _currentMoveBlock;
