@@ -27,7 +27,7 @@ namespace UI
 
         public void OnBackToMenuClick()
         {
-            gameObject.SetActive(true);
+            gameObject.SetActive(false);
             mainWindow.gameObject.SetActive(true);
         }
     }

@@ -31,6 +31,14 @@ namespace UI
             gameObject.SetActive(false);
             mainWindow.gameObject.SetActive(true);
         }
+
+        public void OnBtnRestartClick()
+        {
+            Time.timeScale = 1;
+            teTrisWindow.StopAllCoroutines();
+            gameObject.SetActive(false);
+            teTrisWindow.StartGame();
+        }
     }
 }
 

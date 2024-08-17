@@ -129,6 +129,11 @@ namespace Gameplay
         private int _bombNum;
         private bool _nextIsBomb;
 
+        public bool NextIsBomb => _nextIsBomb;
+        public int NextBlockId { get; private set; }
+
+        public bool MoveBlockIsBlocked => _blockedTimes > 0;
+
         private float _blockedTimes = 0;
         
         public bool inTick { get; private set; }
@@ -222,7 +227,8 @@ namespace Gameplay
             {
                 _weight[i] /= count;
             }
-
+            
+            GenNextBlockId();
             UpdateAllBlockValue();
         }
 
@@ -558,7 +564,7 @@ namespace Gameplay
         private void CreateNewMoveBlock()
         {
             Debug.Log("CreateNewMoveBlock");
-            var ran = Random.value;
+            
             if (_nextIsBomb)
             {
                 _currentMoveBlock = Activator.CreateInstance<BombTetrisMoveBlock>();
@@ -567,17 +573,11 @@ namespace Gameplay
             }
             else
             {
-                for (int i = 0; i < _weight.Count; i++)
-                {
-                    if (ran <= _weight[i])
-                    {
-                        _currentMoveBlock = Activator.CreateInstance(_moveBlocks[i + 1]) as BTetrisMoveBlock;
-                        break;
-                    }
-                }
+                _currentMoveBlock = Activator.CreateInstance(_moveBlocks[NextBlockId + 1]) as BTetrisMoveBlock;
             }
 
-
+            GenNextBlockId();
+            
             if (_rotateState == TetrisState.Rotate0)
             {
                 _currentMoveBlock.pos = _tetrisCenter + new Vector2Int(0, GameConst.TetrisGroundHeight / 2 - _currentMoveBlock.Height);
@@ -618,64 +618,64 @@ namespace Gameplay
             {
                 if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
                 {
-                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1 + 1);
                 }
 
                 if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
                 {
-                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1 + 1);
                 }
                 else if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
                 {
-                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2 + 1);
                 }
             }
             else if(_rotateState == TetrisState.Rotate90)
             {
                 if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
                 {
-                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1 + 1);
                 }
                 else if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
                 {
-                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2 + 1);
                 }
 
-                if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
+                if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2 + 1)
                 {
-                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2 + 1);
                 } 
             }
             else if (_rotateState == TetrisState.Rotate180)
             {
                 if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
                 {
-                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2 + 1);
                 }
 
                 if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
                 {
-                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1 + 1);
                 }
                 else if (blockBoard.x1 < board.x2 && blockBoard.x2 >= board.x2)
                 {
-                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2);
+                    _currentMoveBlock.pos.x -= (blockBoard.x2 - board.x2 + 1);
                 }
             }
             else
             {
                 if (blockBoard.y1 < board.y1 && blockBoard.y2 >= board.y1)
                 {
-                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1);
+                    _currentMoveBlock.pos.y += (board.y1 - blockBoard.y1 + 1);
                 }
                 else if (blockBoard.y1 < board.y2 && blockBoard.y2 >= board.y2)
                 {
-                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2);
+                    _currentMoveBlock.pos.y -= (blockBoard.y2 - board.y2 + 1);
                 }
 
                 if (blockBoard.x1 < board.x1 && blockBoard.x2 >= board.x1)
                 {
-                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1);
+                    _currentMoveBlock.pos.x += (board.x1 - blockBoard.x1 + 1);
                 }
             }
 
@@ -1119,6 +1119,20 @@ namespace Gameplay
             }
 
             return false;
+        }
+
+        private void GenNextBlockId()
+        {
+            var ran = Random.value;
+
+            for (int i = 0; i < _weight.Count; i++)
+            {
+                if (ran <= _weight[i])
+                {
+                    NextBlockId = i;
+                    return;
+                }
+            }
         }
     }
 }

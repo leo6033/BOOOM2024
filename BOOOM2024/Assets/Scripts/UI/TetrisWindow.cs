@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Disc0ver.Engine;
 using Engine.Runtime;
 using UI;
@@ -37,10 +38,12 @@ namespace Gameplay.UI
         public DescriptionWindow descriptionWindow;
         public SettlementWindow settlementWindow;
 
+        public List<GameObject> blockPreViewLists = new List<GameObject>();
+
         private bool _dirKeyDown = false;
         private float _lastDirKeyDownTime = 0f;
         private Vector2Int _lastDir;
-
+        
         private float _nextTickTime = 0;
 
         public void Awake()
@@ -52,6 +55,15 @@ namespace Gameplay.UI
         public void Initialization()
         {
             tetris = new Tetris();
+
+            if (_tetrisBlocks != null)
+            {
+                foreach (var image in _tetrisBlocks)
+                {
+                    if(image!= null)
+                        Destroy(image.gameObject);
+                }
+            }
 
             _tetrisBlocks = new Image[GameConst.BackgroundWidth, GameConst.BackgroundHeight];
             var size = new Vector2(GameConst.BlockSize, GameConst.BlockSize);
@@ -171,10 +183,12 @@ namespace Gameplay.UI
                 }
                 
                 UpdateAllBlocks();
+                ShowNextBlock();
 
                 scoreText.text = $"{tetris.Score}";
                 bombNumText.text = $"{tetris.BombNum}";
                 speedImg.SetIndex(tetris.SpeedLevel - 1);
+                bombSwitchImg.SetIndex(tetris.NextIsBomb ? 1 : 0);
 
                 yield return null;
             }
@@ -186,6 +200,8 @@ namespace Gameplay.UI
             {
                 Destroy(image.gameObject);
             }
+
+            _tetrisBlocks = null;
         }
         
         // public void Update()
@@ -287,6 +303,8 @@ namespace Gameplay.UI
                     // }
                     // else 
                     var anim = _tetrisBlocks[i, j].transform.parent.GetComponent<Animator>();
+                    var switchImage = _tetrisBlocks[i, j].GetComponent<UISwitchImage>();
+                    switchImage.SetIndex(0);
                     if (tetris[i, j] == BlockState.SoftBlock || tetris[i, j] == BlockState.Block)
                     {
                         // color = Color.blue;
@@ -298,7 +316,7 @@ namespace Gameplay.UI
                     {
                         anim.enabled = false;
                     }
-                    
+
                     if (tetris[i, j] == BlockState.Null)
                     {
                         color.a = 0;
@@ -316,9 +334,13 @@ namespace Gameplay.UI
                     {
                         var posX = tetris.CurrentMoveBlock.pos.x + i - tetris.CurrentMoveBlock.Width / 2;
                         var posY = tetris.CurrentMoveBlock.pos.y + j;
-                        
-                        if(tetris.CurrentMoveBlock.Block[i, j] != 0)
+
+                        if (tetris.CurrentMoveBlock.Block[i, j] != 0)
+                        {
                             _tetrisBlocks[posX, posY].color = Color.white;
+                            var switchImage = _tetrisBlocks[posX, posY].GetComponent<UISwitchImage>();
+                                switchImage.SetIndex(tetris.MoveBlockIsBlocked ? 2 : 1);
+                        }
                     }
                 }
             }
@@ -365,6 +387,23 @@ namespace Gameplay.UI
                 new Vector2((i - GameConst.BackgroundWidth / 2  + 0.5f) * GameConst.BlockSize ,
                     (j - GameConst.BackgroundHeight / 2 + 0.5f) * GameConst.BlockSize);
             rectTransform.localScale = new Vector3(GameConst.BlockSize / 100f, GameConst.BlockSize / 100f, GameConst.BlockSize / 100f);;
+        }
+
+        private void ShowNextBlock()
+        {
+            foreach (var preView in blockPreViewLists)
+            {
+                preView.SetActive(false);
+            }
+
+            if (tetris.NextIsBomb)
+            {
+                blockPreViewLists[7].SetActive(true);
+            }
+            else
+            {
+                blockPreViewLists[tetris.NextBlockId].SetActive(true);
+            }
         }
     }
 }
