@@ -20,5 +20,10 @@ namespace UI
             gameObject.SetActive(false);
             tetrisWindow.StartGame();
         }
+
+        public void OnExitClick()
+        {
+            Application.Quit();
+        }
     }
 }

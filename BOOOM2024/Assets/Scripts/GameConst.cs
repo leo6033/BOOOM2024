@@ -95,4 +95,9 @@ namespace Gameplay
         public static readonly int UseBomb = 6;
         public static readonly int BombEffect = 7;
     }
+
+    public static class EventType
+    {
+        public static readonly string BlockDestroy = "blockDestroy";
+    }
 }

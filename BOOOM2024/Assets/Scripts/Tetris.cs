@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Schema;
 using Engine.Runtime;
 using Engine.SettingModule;
 using Unity.Mathematics;
-using UnityEditor.UI;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -412,7 +410,8 @@ namespace Gameplay
                         endY = math.max(pos.y, endY);
                     }
                 }
-                
+
+                var clearCount = 0;
                 for (int j = endY; j >= startY; j--)
                 {
                     var count = 0;
@@ -429,6 +428,8 @@ namespace Gameplay
                         for (int i = 0; i < GameConst.TetrisGroundWidth; i++)
                         {
                             _tetrisArea[i, j] = BlockState.Null;
+                            var tmp = tetrisToAreaPosFuncs[_rotateState](i, j + clearCount) + _tetrisCenter;
+                            GameEvent.Send(EventType.BlockDestroy, tmp.x, tmp.y);
                         }
 
                         for (int j1 = j + 1; j1 < GameConst.TetrisGroundHeight; j1++)
@@ -441,6 +442,7 @@ namespace Gameplay
                         }
 
                         Score += LevelInfo.score;
+                        clearCount++;
                     }
                 }
 
@@ -466,6 +468,7 @@ namespace Gameplay
                     }
                 }
                 
+                var clearCount = 0;
                 for (int j = endY; j >= startY; j--)
                 {
                     var count = 0;
@@ -482,6 +485,7 @@ namespace Gameplay
                         for (int i = 0; i < GameConst.BackgroundWidth; i++)
                         {
                             _area[i, j] = BlockState.Null;
+                            GameEvent.Send(EventType.BlockDestroy, i, j);
                         }
                         
                         for (int j1 = j + 1; j1 < GameConst.TetrisGroundHeight; j1++)
@@ -494,6 +498,7 @@ namespace Gameplay
                         }
                         
                         Score += LevelInfo.score;
+                        clearCount++;
                     }
                 }
             }

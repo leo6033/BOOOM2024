@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using Disc0ver.Engine;
+using Engine.Runtime;
 using UI;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = System.Random;
 
 namespace Gameplay.UI
 {
@@ -15,6 +16,9 @@ namespace Gameplay.UI
         public GameConstConfig config;
         public RectTransform tetrisArea;
 
+        private Random _random = new Random();
+
+        public GameObject destroyPrefab;
         
         private Image[,] _tetrisBlocks;
         public RectTransform areaRectTransform;
@@ -31,6 +35,7 @@ namespace Gameplay.UI
 
         public MenuWindow menuWindow;
         public DescriptionWindow descriptionWindow;
+        public SettlementWindow settlementWindow;
 
         private bool _dirKeyDown = false;
         private float _lastDirKeyDownTime = 0f;
@@ -41,7 +46,7 @@ namespace Gameplay.UI
         public void Awake()
         {
             GameConst.Config = config;
-            Initialization();
+            GameEvent.AddEventListener<int, int>(EventType.BlockDestroy, PlayDestroy);
         }
 
         public void Initialization()
@@ -72,6 +77,8 @@ namespace Gameplay.UI
 
         public void StartGame()
         {
+            Initialization();
+
             bombNumMaxText.text = $"{GameConst.BombLimit}";
             scoreText.text = $"{tetris.Score}";
             bombNumText.text = $"{tetris.BombInfo.remainBlockNum}";
@@ -173,6 +180,12 @@ namespace Gameplay.UI
             }
 
             UpdateAllBlocks();
+            settlementWindow.Open(tetris.Score);
+
+            foreach (var image in _tetrisBlocks)
+            {
+                Destroy(image.gameObject);
+            }
         }
         
         // public void Update()
@@ -273,19 +286,20 @@ namespace Gameplay.UI
                     //     }
                     // }
                     // else 
-                    if (tetris[i, j] == BlockState.SoftBlock)
+                    var anim = _tetrisBlocks[i, j].transform.parent.GetComponent<Animator>();
+                    if (tetris[i, j] == BlockState.SoftBlock || tetris[i, j] == BlockState.Block)
                     {
                         // color = Color.blue;
-                    }
-                    else if (tetris[i, j] == BlockState.Bomb)
-                    {
-                        // color = Color.yellow;
-                    }
-                    else if(tetris[i, j] == BlockState.Block)
-                    {
-                        // color = Color.red;
+                        anim.enabled = true;
+                        if(_random.NextDouble() < 0.3f && !anim.GetCurrentAnimatorStateInfo(0).IsName("Spark"))
+                            anim.Play("Spark");
                     }
                     else
+                    {
+                        anim.enabled = false;
+                    }
+                    
+                    if (tetris[i, j] == BlockState.Null)
                     {
                         color.a = 0;
                     }
@@ -341,6 +355,16 @@ namespace Gameplay.UI
         public void OnDescriptionClick()
         {
             descriptionWindow.Open();
+        }
+
+        public void PlayDestroy(int i, int j)
+        {
+            var go = GameObject.Instantiate(destroyPrefab, areaRectTransform);
+            var rectTransform = go.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition =
+                new Vector2((i - GameConst.BackgroundWidth / 2  + 0.5f) * GameConst.BlockSize ,
+                    (j - GameConst.BackgroundHeight / 2 + 0.5f) * GameConst.BlockSize);
+            rectTransform.localScale = new Vector3(GameConst.BlockSize / 100f, GameConst.BlockSize / 100f, GameConst.BlockSize / 100f);;
         }
     }
 }

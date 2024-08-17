@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 1305265742881900050}
   - component: {fileID: 8209399670998404538}
   - component: {fileID: 3496195905547599844}
+  - component: {fileID: 1032298358070748540}
   m_Layer: 5
-  m_Name: Block
+  m_Name: DestoryBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -57,9 +58,9 @@ Animation:
   m_GameObject: {fileID: 1305265742881900049}
   m_Enabled: 1
   serializedVersion: 3
-  m_Animation: {fileID: 7400000, guid: 886c231f7f2c2804ca701474cb9df5ab, type: 2}
+  m_Animation: {fileID: 7400000, guid: ca26b31b1b27f6d478e469419f03c0de, type: 2}
   m_Animations:
-  - {fileID: 7400000, guid: 886c231f7f2c2804ca701474cb9df5ab, type: 2}
+  - {fileID: 7400000, guid: ca26b31b1b27f6d478e469419f03c0de, type: 2}
   m_WrapMode: 0
   m_PlayAutomatically: 0
   m_AnimatePhysics: 0
@@ -85,6 +86,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1032298358070748540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1305265742881900049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 252f0756757f4ee9be4ab9f35f14ac49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7765577446675773133
 GameObject:
   m_ObjectHideFlags: 0
