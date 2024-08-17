@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Disc0ver.Engine;
+using UI;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,6 +29,9 @@ namespace Gameplay.UI
         public UISwitchImage bombSwitchImg;
         public UISwitchImage speedImg;
 
+        public MenuWindow menuWindow;
+        public DescriptionWindow descriptionWindow;
+
         private bool _dirKeyDown = false;
         private float _lastDirKeyDownTime = 0f;
         private Vector2Int _lastDir;
@@ -46,25 +50,27 @@ namespace Gameplay.UI
 
             _tetrisBlocks = new Image[GameConst.BackgroundWidth, GameConst.BackgroundHeight];
             var size = new Vector2(GameConst.BlockSize, GameConst.BlockSize);
+            var scale = new Vector3(GameConst.BlockSize / 100f, GameConst.BlockSize / 100f, GameConst.BlockSize / 100f);
 
             for (int i = 0; i < GameConst.BackgroundWidth; i++)
             {
                 for (int j = 0; j < GameConst.BackgroundHeight; j++)
                 {
-                    _tetrisBlocks[i, j] = GameObject.Instantiate(blockPrefab, areaRectTransform).GetComponent<Image>();
+                    _tetrisBlocks[i, j] = GameObject.Instantiate(blockPrefab, areaRectTransform).GetComponentInChildren<Image>();
                     var rectTransform = _tetrisBlocks[i, j].GetComponent<RectTransform>();
                     
                     rectTransform.anchoredPosition =
                         new Vector2((i - GameConst.BackgroundWidth / 2 + 0.5f) * GameConst.BlockSize ,
                             (j - GameConst.BackgroundHeight / 2 + 0.5f) * GameConst.BlockSize);
-                    rectTransform.sizeDelta = size;
+                    // rectTransform.sizeDelta = size;
+                    rectTransform.localScale = scale;
                 }
             }
 
             UpdateAllBlocks();
         }
 
-        private void Start()
+        public void StartGame()
         {
             bombNumMaxText.text = $"{GameConst.BombLimit}";
             scoreText.text = $"{tetris.Score}";
@@ -269,15 +275,15 @@ namespace Gameplay.UI
                     // else 
                     if (tetris[i, j] == BlockState.SoftBlock)
                     {
-                        color = Color.blue;
+                        // color = Color.blue;
                     }
                     else if (tetris[i, j] == BlockState.Bomb)
                     {
-                        color = Color.yellow;
+                        // color = Color.yellow;
                     }
                     else if(tetris[i, j] == BlockState.Block)
                     {
-                        color = Color.red;
+                        // color = Color.red;
                     }
                     else
                     {
@@ -298,7 +304,7 @@ namespace Gameplay.UI
                         var posY = tetris.CurrentMoveBlock.pos.y + j;
                         
                         if(tetris.CurrentMoveBlock.Block[i, j] != 0)
-                            _tetrisBlocks[posX, posY].color = Color.black;
+                            _tetrisBlocks[posX, posY].color = Color.white;
                     }
                 }
             }
@@ -325,6 +331,16 @@ namespace Gameplay.UI
             }
 
             tetrisArea.rotation = rotation;
+        }
+
+        public void OnMenuClick()
+        {
+            menuWindow.Open();
+        }
+
+        public void OnDescriptionClick()
+        {
+            descriptionWindow.Open();
         }
     }
 }
