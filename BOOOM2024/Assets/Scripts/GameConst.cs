@@ -99,5 +99,6 @@ namespace Gameplay
     public static class EventType
     {
         public static readonly string BlockDestroy = "blockDestroy";
+        public static readonly string BombBoom = "bombBoom";
     }
 }

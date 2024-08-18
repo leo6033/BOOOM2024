@@ -46,15 +46,23 @@ namespace Gameplay.UI
         
         private float _nextTickTime = 0;
 
+        private RectTransform _rectTransform;
+        private bool _playShake;
+
         public void Awake()
         {
             GameConst.Config = config;
             GameEvent.AddEventListener<int, int>(EventType.BlockDestroy, PlayDestroy);
+            GameEvent.AddEventListener(EventType.BombBoom, ShakeWindow);
         }
 
         public void Initialization()
         {
             tetris = new Tetris();
+            _playShake = false;
+            
+            _rectTransform = gameObject.GetComponent<RectTransform>();
+            _rectTransform.anchoredPosition = Vector2.zero;
 
             if (_tetrisBlocks != null)
             {
@@ -190,6 +198,12 @@ namespace Gameplay.UI
                 speedImg.SetIndex(tetris.SpeedLevel - 1);
                 bombSwitchImg.SetIndex(tetris.NextIsBomb ? 1 : 0);
 
+                if (_playShake)
+                {
+                    ShakeWindow();
+                    _playShake = false;
+                }
+
                 yield return null;
             }
 
@@ -281,27 +295,7 @@ namespace Gameplay.UI
                 for (int j = 0; j < GameConst.BackgroundHeight; j++)
                 {
                     var color = Color.white;
-                    // if (tetris[i, j] == BlockState.Null)
-                    // {
-                    //     if (i >= board.x1 && i < board.x2 && j >= board.y1 && j < board.y2)
-                    //     {
-                    //         _tetrisBlocks[i, j].color = Color.gray;
-                    //         if ((tetris.RotateState == TetrisState.Rotate0 && j == board.y2 - 1) || 
-                    //             (tetris.RotateState == TetrisState.Rotate90 && i == board.x1) ||
-                    //             (tetris.RotateState == TetrisState.Rotate180 && j == board.y1) ||
-                    //             (tetris.RotateState == TetrisState.Rotate270 && i == board.x2 - 1))
-                    //         {
-                    //             color = Color.cyan;
-                    //         }
-                    //             
-                    //     }
-                    //     else
-                    //     {
-                    //         color = Color.white;
-                    //         color.a = 0;
-                    //     }
-                    // }
-                    // else 
+
                     var anim = _tetrisBlocks[i, j].transform.parent.GetComponent<Animator>();
                     var switchImage = _tetrisBlocks[i, j].GetComponent<UISwitchImage>();
                     switchImage.SetIndex(0);
@@ -316,6 +310,12 @@ namespace Gameplay.UI
                     {
                         anim.enabled = false;
                     }
+
+                    if (tetris[i, j] == BlockState.Bomb)
+                    {
+                        switchImage.SetIndex(3);
+                    }
+                    
 
                     if (tetris[i, j] == BlockState.Null)
                     {
@@ -339,7 +339,15 @@ namespace Gameplay.UI
                         {
                             _tetrisBlocks[posX, posY].color = Color.white;
                             var switchImage = _tetrisBlocks[posX, posY].GetComponent<UISwitchImage>();
+                            
+                            if (tetris.CurrentMoveBlock.BlockType != MoveBlockType.Bomb)
+                            {
                                 switchImage.SetIndex(tetris.MoveBlockIsBlocked ? 2 : 1);
+                            }
+                            else
+                            {
+                                switchImage.SetIndex(3);
+                            }
                         }
                     }
                 }
@@ -387,6 +395,7 @@ namespace Gameplay.UI
                 new Vector2((i - GameConst.BackgroundWidth / 2  + 0.5f) * GameConst.BlockSize ,
                     (j - GameConst.BackgroundHeight / 2 + 0.5f) * GameConst.BlockSize);
             rectTransform.localScale = new Vector3(GameConst.BlockSize / 100f, GameConst.BlockSize / 100f, GameConst.BlockSize / 100f);;
+            _playShake = true;
         }
 
         private void ShowNextBlock()
@@ -404,6 +413,27 @@ namespace Gameplay.UI
             {
                 blockPreViewLists[tetris.NextBlockId].SetActive(true);
             }
+        }
+
+        private void ShakeWindow()
+        {
+            StartCoroutine(CoShakeWindow());
+        }
+
+        private IEnumerator CoShakeWindow()
+        {
+            var shakeTime = 0.5f;
+            while (shakeTime > 0)
+            {
+                shakeTime -= Time.deltaTime;
+
+                var position = new Vector2((float)_random.NextDouble(), (float)_random.NextDouble()) * 3;
+
+                _rectTransform.anchoredPosition = position;
+                yield return null;
+            }
+            
+            _rectTransform.anchoredPosition = Vector2.zero;
         }
     }
 }

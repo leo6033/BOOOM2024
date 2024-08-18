@@ -273,13 +273,21 @@ namespace Gameplay
             if (_bombInfo.remainBlockNum <= 0 && _bombInfo.hasBomb == false && _bombNum < GameConst.BombLimit)
             {
                 var tetrisBoard = GetTetrisAreaBoard();
-                var x = Random.Range(tetrisBoard.x2 + GameConst.MinBombDistance,
-                    tetrisBoard.x2 + GameConst.BackgroundWidth - GameConst.MinBombDistance) % GameConst.BackgroundWidth;
-                var y = Random.Range(tetrisBoard.y2 + GameConst.MinBombDistance,
-                            tetrisBoard.y2 + GameConst.BackgroundHeight - GameConst.MinBombDistance) %
-                        GameConst.BackgroundHeight;
-                _bombInfo.pos = new Vector2Int(x, y);
-                _bombInfo.hasBomb = true;
+
+                while (!_bombInfo.hasBomb)
+                {
+                    var x = Random.Range(tetrisBoard.x2 + GameConst.MinBombDistance,
+                        tetrisBoard.x2 + GameConst.BackgroundWidth - GameConst.MinBombDistance) % GameConst.BackgroundWidth;
+                    var y = Random.Range(tetrisBoard.y2 + GameConst.MinBombDistance,
+                                tetrisBoard.y2 + GameConst.BackgroundHeight - GameConst.MinBombDistance) %
+                            GameConst.BackgroundHeight;
+                    if (_area[x, y] == BlockState.Null)
+                    {
+                        _bombInfo.pos = new Vector2Int(x, y);
+                        _bombInfo.hasBomb = true;
+                    }
+                }
+                
             }
             
             UpdateAllBlockValue();
@@ -362,6 +370,7 @@ namespace Gameplay
             // 炸弹块
             if (_currentMoveBlock.BlockType == MoveBlockType.Bomb)
             {
+
                 var func = areaPosToTetrisPosFuncs[_rotateState];
                 for (int i = -1; i <= 1; i++)
                 {
@@ -369,19 +378,22 @@ namespace Gameplay
                     {
                         var posX = _currentMoveBlock.pos.x + i;
                         var posY = _currentMoveBlock.pos.y + j;
-                        
+                    
                         var pos = func(posX, posY, _tetrisCenter);
                         if (pos.x >= 0 && pos.x < GameConst.TetrisGroundWidth && pos.y >= 0 &&
                             pos.y < GameConst.TetrisGroundHeight)
                         {
                             _tetrisArea[pos.x, pos.y] = 0;
                         }
-                        else
+                        else if (posX >= 0 && posX < GameConst.BackgroundWidth && posY >= 0 &&
+                                 posY < GameConst.BackgroundHeight)
                         {
                             _area[posX, posY] = 0;
                         }
                     }
                 }
+
+                GameEvent.Send(EventType.BombBoom);
                 SoundModule.Instance.PlayAudio(SoundId.BombEffect);
             }
             // 落在移动场地内
